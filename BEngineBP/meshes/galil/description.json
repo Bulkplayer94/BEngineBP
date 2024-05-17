@@ -1,0 +1,8 @@
+{
+  "modelMesh": "Galil.fbx",
+  "material": {
+    "volume": "wpn_galil.tga.png",
+    "bump": "wpn_galil_bump.tga.png",
+    "specular": "wpn_galil_spec.tga.png"
+  }
+}

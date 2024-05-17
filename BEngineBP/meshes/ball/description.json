@@ -1,0 +1,6 @@
+{
+  "modelMesh": "ball.obj",
+  "material": {
+    "volume": "volume.png"
+  }
+}

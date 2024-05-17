@@ -1,0 +1,6 @@
+{
+  "modelMesh": "world.dae",
+  "material": {
+    "volume": "volume.png"
+  }
+}
