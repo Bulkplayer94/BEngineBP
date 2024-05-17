@@ -1,8 +1,0 @@
-# Created with 3dcityloader.com
-# Texture Map data from OpenStreetMap
-newmtl terrain_material
-Ks 0.333333 0.333333 0.333333
-map_Kd map_texture.jpg
-
-newmtl buildings_material
-Kd 0.7 0.7 0.7

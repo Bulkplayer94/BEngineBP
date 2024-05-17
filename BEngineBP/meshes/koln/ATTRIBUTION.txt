@@ -1,8 +1,0 @@
-The following datasets were used to create the file:
-
-buildings (Datenlizenz Deutschland – Zero, Geobasis NRW / 3D-Gebäudemodell LoD2) - https://www.bezreg-koeln.nrw.de/brk_internet/geobasis/index.html
-https://www.govdata.de/dl-de/zero-2-0
-
-terrain (Datenlizenz Deutschland – Zero, Geobasis NRW / DGM1) - https://www.bezreg-koeln.nrw.de/brk_internet/geobasis/index.html
-https://www.govdata.de/dl-de/zero-2-0
-
