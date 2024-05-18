@@ -1,4 +1,4 @@
-[![en](https://img.shields.io/badge/lang-en-green.svg)](https://github.com/Bulkplayer94/BEngineBP/blob/ad8359e781fba187ebfe4cb46c2a64e7c1cc2113/README.md)
+[![en](https://img.shields.io/badge/lang-en-green.svg)](https://github.com/Bulkplayer94/BEngineBP/blob/main/README.md)
 
 # BEngineBP
 Eine 3D-Spiele-Engine mit Lua-Integration (W.I.P.)
@@ -27,5 +27,5 @@ gespeichert werden.
 Die standardmäßig von der BEngineBP genutzten Meshes können Sie ebenfalls unter dem bei Downloads stehenden Link finden.
 
 # Downloads
-Vorkompilierte Versionen der Libraries und Meshes: [MEGA Link](https://mega.nz/file/omB0DRxS#oydcNSZ9uxbcyAUdsnRPLxsW20oDKZzcEzCyZ72qp-4)
-Komplett Kompilierte (Ready to Go) Version der BEngineBP: [Mega Link](https://mega.nz/file/8yBGhADQ#xDg7UNgNXDjG7kmLRwKCMe0qJM6oUZVIJu5GyFSGKuo)
+* Vorkompilierte Versionen der Libraries und Meshes: [MEGA Link](https://mega.nz/file/NzQzmRrJ#Bg4LO9HaOSDi19WEzsCwTxn2-GoHjdo3U8AnsJBFWfo)
+* Komplett Kompilierte (Ready to Go) Version der BEngineBP: [Mega Link](https://mega.nz/file/8yBGhADQ#xDg7UNgNXDjG7kmLRwKCMe0qJM6oUZVIJu5GyFSGKuo)
