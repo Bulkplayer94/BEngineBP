@@ -1,4 +1,4 @@
-[![de](https://img.shields.io/badge/lang-de-green.svg)](https://github.com/Bulkplayer94/BEngineBP/README.de.md)
+[![de](https://img.shields.io/badge/lang-de-green.svg)](https://github.com/Bulkplayer94/BEngineBP/blob/ad8359e781fba187ebfe4cb46c2a64e7c1cc2113/README.de.md)
 
 # BEngineBP
 A 3D Game Engine with Lua Integration (W.I.P.)
