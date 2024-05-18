@@ -44,7 +44,7 @@ void BEngine::LuaManager::Init() {
 	lState = luaL_newstate();
 	luaL_openBLib(lState);
 
-	luaL_dostring(lState, "print(\"Du Hund\")");
+	luaL_dostring(lState, "print(\"Test from Lua\")");
 
 	lua_close(lState);
 	lState = nullptr;

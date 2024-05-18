@@ -33,7 +33,7 @@ bld/
 [Ll]ogs/
 
 # Ignore all Custom meshes
-BEngine/meshes
+BEngineBP/meshes
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
