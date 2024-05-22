@@ -92,6 +92,8 @@ namespace Globals {
 		extern PxPvdTransport* mTransport;
 		extern PxScene* mScene;
 		extern PxMaterial* mMaterial;
+		extern PxControllerManager* mControllerManager;
+		extern PxCapsuleController* mPlayerController;
 
 	}
 }

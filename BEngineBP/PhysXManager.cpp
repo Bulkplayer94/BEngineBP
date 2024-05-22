@@ -82,6 +82,21 @@ namespace PhysXManager {
         groundPlane->setGlobalPose(transform);
         mScene->addActor(*groundPlane);
 
+        mControllerManager = PxCreateControllerManager(*mScene);
+
+        PxCapsuleControllerDesc controllerDesc;
+        controllerDesc.setToDefault();
+
+        controllerDesc.height = 5.0F;
+        controllerDesc.radius = 2.0F;
+        controllerDesc.position = { 5.0F, 5.0F, 5.0F };
+        controllerDesc.material = mMaterial;
+
+        if (!controllerDesc.isValid())
+            assert(false);
+
+        mPlayerController = (PxCapsuleController*)mControllerManager->createController(controllerDesc);
+
         return true;
     }
 }
