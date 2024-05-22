@@ -7,6 +7,7 @@
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
+#include "3DMaths.h"
 
 namespace Globals {
 
@@ -15,6 +16,7 @@ namespace Globals {
 	namespace Win32 {
 		extern HINSTANCE hInstance;
 		extern HWND hWnd;
+		extern float2 aspectRatio;
 
 		bool initWin32(HINSTANCE hInstance);
 	}

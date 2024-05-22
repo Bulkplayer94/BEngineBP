@@ -1,3 +1,5 @@
+include("test.lua")
+
 print("Test Script is Executed!")
 
 local ent = LuaEntity(1)

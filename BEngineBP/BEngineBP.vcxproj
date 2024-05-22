@@ -161,6 +161,7 @@
     <ClCompile Include="shader\SHADER_default.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GuiLib.h" />
     <ClInclude Include="3DMaths.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="ErrorReporter.h" />
@@ -177,12 +178,6 @@
     <ClInclude Include="IMOverlayManager.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="LuaManager.h" />
-    <ClInclude Include="lua\lauxlib.h" />
-    <ClInclude Include="lua\lua.h" />
-    <ClInclude Include="lua\lua.hpp" />
-    <ClInclude Include="lua\luaconf.h" />
-    <ClInclude Include="lua\luajit.h" />
-    <ClInclude Include="lua\lualib.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="Shader.h" />
@@ -190,6 +185,8 @@
     <ClInclude Include="shader\SHADER_defines.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="lua\hook.lua" />
+    <None Include="lua\test.lua" />
     <None Include="lua\test_script.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

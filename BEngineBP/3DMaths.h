@@ -6,6 +6,10 @@
 #pragma warning(push)
 #pragma warning(disable:4201) // anonymous struct warning
 
+struct float2 {
+    float x, y;
+};
+
 struct float3
 {
     float x, y, z;
@@ -190,6 +194,16 @@ inline float4x4 makePerspectiveMat(float aspectRatio, float fovYRadians, float z
         0, yScale, 0, 0,
         0, 0, zScale, zTranslation,
         0, 0, -1, 0 
+    };
+    return result;
+}
+
+inline float4x4 createIdentityMatrix() {
+    float4x4 result = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
     };
     return result;
 }

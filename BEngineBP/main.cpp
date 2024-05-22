@@ -6,6 +6,7 @@
 
 
 #include "globals.h"
+#include "GuiLib.h"
 
 #include <iostream>
 #include <windows.h>
@@ -29,6 +30,8 @@
 #include "MeshManager.h"
 #include "LuaManager.h"
 
+#include <chrono>
+
 #include <thread>
 
 FILE* stream;
@@ -47,10 +50,10 @@ void LoadRessources() {
         }
     }
 
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -50.0F, 0.0F });
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -50.0F, 0.0F });
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
 
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
 
     isLoading = false;
 
@@ -109,7 +112,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     BEngine::luaManager.Init();
 
     ImVec2 MousePos = { 0.0F, 0.0F };
-    
+
     // Main Loop
     bool isRunning = true;
     while (isRunning)
@@ -123,8 +126,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             currentTimeInSeconds = (double)(perfCount.QuadPart - startPerfCount) / (double)perfCounterFrequency;
             dt = (float)(currentTimeInSeconds - previousTimeInSeconds);
-            if (dt > (1.f / 60.f))
-                dt = (1.f / 60.f);
+            //if (dt > (1.f / 60.f))
+            //    dt = (1.f / 60.f);
         }
 
         MSG msg = {};
@@ -136,30 +139,50 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             DispatchMessageW(&msg);
         }
 
-        //if (isLoading) {
-        //    imOverlayManager.Proc();
+        auto start = std::chrono::high_resolution_clock::now();
 
-        //    ImGuiIO& io = ImGui::GetIO();
-        //    ImDrawList* bgList = ImGui::GetBackgroundDrawList();
-
-        //    ImVec2 screenCenter(io.DisplaySize.x / 2, io.DisplaySize.y / 2);
-        //    ImVec2 textSize = ImGui::CalcTextSize("Loading...");
-
-        //    ImGui::Begin("Hurensohn Loading");
-        //    ImGui::Text("BOMBE!");
-        //    ImGui::End();
-
-        //    //bgList->AddText(ImVec2(screenCenter.x, screenCenter.y), ImColor(255, 255, 255), "Loading...");
-        //    //bgList->AddRectFilled(ImVec2(0, 0), io.DisplaySize, ImColor(100, 100, 100));
-
-        //    imOverlayManager.EndProc();
-        //    d3d11SwapChain->Present(1, 0);
-        //    continue;
-        //}
-        
         if (!isLoading) {
             Globals::PhysX::mScene->simulate(dt);
             Globals::PhysX::mScene->fetchResults(true);
+        }
+
+        long long mögliche_leistung = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
+
+        float3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
+        if (!isLoading) {
+            PxVec3 origin = { cameraPos.x, cameraPos.y, cameraPos.z };
+            PxVec3 unitDir = {
+                cameraFwd.x,
+                cameraFwd.y,
+                cameraFwd.z
+            };
+            PxReal maxDistance = 500.0F;
+            PxRaycastBuffer hit;
+
+            unitDir.normalize();
+
+            bool status = Globals::PhysX::mScene->raycast(origin, unitDir, maxDistance, hit);
+            if (status) {
+                eyeTracePos = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
+
+                if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft, false) && (hit.block.actor->getType() == physx::PxActorType::eRIGID_DYNAMIC)) {
+                    PxRigidDynamic* act = (PxRigidDynamic*)hit.block.actor;
+
+                    // Calculate the direction from the hit point to the object's center of mass
+                    PxVec3 forceDir = hit.block.position - act->getGlobalPose().p;
+
+                    // Normalize the direction vector
+                    forceDir.normalize();
+                    forceDir *= -1;
+
+                    // Calculate the force magnitude (you may adjust this based on the desired effect)
+                    PxReal forceMagnitude = 2500.0f;
+
+                    // Apply the force to the object
+                    act->addForce(forceDir * forceMagnitude, physx::PxForceMode::eIMPULSE);
+                }
+            }
+            
         }
 
         imOverlayManager.Proc();
@@ -189,11 +212,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                     MousePos = newMousePos;
 
+
+                    //bool lastWindowStatus = true;
                     if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
-                        SetCursor(NULL);
+                        //SetCursor(NULL);
                     }
                     else { 
-                        HCURSOR SetCursor(LoadCursorW(0, IDC_ARROW));
+                        //HCURSOR SetCursor(LoadCursorW(0, IDC_ARROW));
                     }
                     
                 }
@@ -201,7 +226,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         } 
 
         // Get window dimensions
-        int windowWidth, windowHeight;
+        float windowWidth, windowHeight;
         float windowAspectRatio;
         {
             RECT clientRect;
@@ -353,16 +378,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Actor Num Static: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
                 ImGui::Text("Actor Num Dynamic: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
 
+                ImGui::Text("Mogliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
+                ImGui::Text("Eyetrace Position: %f, %f, %f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
+
+                ImDrawList* bgList = ImGui::GetBackgroundDrawList();
+                float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, viewMat, perspectiveMat, windowWidth, windowHeight);
+                bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
+
             }
             ImGui::End();
+
+            //ImGui::Begin("Debug");
+            //{
+
+            //}
+            //ImGui::End();
         }
-
-
 
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        d3d11SwapChain->Present(1, 0);
+        d3d11SwapChain->Present(0, 0);
     }
 
     return 0;

@@ -2,9 +2,10 @@
 
 namespace Globals {
 
-	namespace Win32 {
-		HINSTANCE hInstance = nullptr;
-		HWND hWnd = nullptr;
+    namespace Win32 {
+        HINSTANCE hInstance = nullptr;
+        HWND hWnd = nullptr;
+        float2 aspectRatio = {};
 	}
 
 	namespace Direct3D {
@@ -202,8 +203,8 @@ bool Globals::Direct3D::initDirect3D() {
         DXGI_SWAP_CHAIN_DESC1 d3d11SwapChainDesc = {};
         d3d11SwapChainDesc.Width = 0; // use window width
         d3d11SwapChainDesc.Height = 0; // use window height
-        d3d11SwapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-        d3d11SwapChainDesc.SampleDesc.Count = 4;
+        d3d11SwapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        d3d11SwapChainDesc.SampleDesc.Count = 1;
         d3d11SwapChainDesc.SampleDesc.Quality = 0;
         d3d11SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         d3d11SwapChainDesc.BufferCount = 2;
@@ -236,6 +237,8 @@ bool Globals::Direct3D::initDirect3D() {
         samplerDesc.BorderColor[2] = 1.0f;
         samplerDesc.BorderColor[3] = 1.0f;
         samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        samplerDesc.MaxLOD = 50;
+        samplerDesc.MinLOD = -50;        
 
         d3d11Device->CreateSamplerState(&samplerDesc, &samplerState);
     }
@@ -246,6 +249,7 @@ bool Globals::Direct3D::initDirect3D() {
         rasterizerDesc.FillMode = D3D11_FILL_SOLID;
         rasterizerDesc.CullMode = D3D11_CULL_BACK;
         rasterizerDesc.FrontCounterClockwise = TRUE;
+        rasterizerDesc.AntialiasedLineEnable = TRUE;
 
         d3d11Device->CreateRasterizerState(&rasterizerDesc, &rasterizerState);
     }

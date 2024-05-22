@@ -24,6 +24,22 @@ extern "C"
 			return 0;
 		}
 
+		static int include(lua_State* L) {
+
+			std::string fileName = luaL_checkstring(L, 1);
+			
+			if (luaL_dofile(L, ("lua\\" + fileName).c_str()) != LUA_OK) {
+				std::cout << lua_tostring(L, -1) << std::endl;
+				lua_pushboolean(L, false);
+			}
+			else {
+				lua_pushboolean(L, true);
+			}
+
+			return 1;
+
+		}
+
 		namespace LuaVector {
 			const char* LuaVector_metaTable = "LuaVector_metaTable";
 
@@ -228,6 +244,7 @@ extern "C"
 
 	static const struct luaL_Reg lua_BLib[]{
 		{"print", &BLua::print},
+		{"include", &BLua::include},
 		{NULL, NULL}
 	};
 }
@@ -257,4 +274,8 @@ void BEngine::LuaManager::Init() {
 
 	lua_close(lState);
 	lState = nullptr;
+}
+
+void BEngine::LuaManager::Proc() {
+	
 }

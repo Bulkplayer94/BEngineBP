@@ -1,5 +1,5 @@
 #pragma once
-#include "lua/lua.hpp"
+#include <lua.hpp>
 
 namespace BEngine {
 	struct LuaManager {
@@ -7,6 +7,7 @@ namespace BEngine {
 		lua_State* lState;
 
 		void Init();
+		void Proc();
 
 	} extern luaManager;
 }
