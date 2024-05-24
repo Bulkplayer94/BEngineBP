@@ -230,7 +230,7 @@ bool Globals::Direct3D::initDirect3D() {
     // ID3D11SamplerState* samplerState;
     {
         D3D11_SAMPLER_DESC samplerDesc = {};
-        samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
         samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
         samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
         samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -238,7 +238,7 @@ bool Globals::Direct3D::initDirect3D() {
         samplerDesc.BorderColor[1] = 1.0f;
         samplerDesc.BorderColor[2] = 1.0f;
         samplerDesc.BorderColor[3] = 1.0f;
-        samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
         //samplerDesc.MaxLOD = 50;
         //samplerDesc.MinLOD = -50;  
 

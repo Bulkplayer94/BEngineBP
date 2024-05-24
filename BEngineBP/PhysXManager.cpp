@@ -87,7 +87,7 @@ namespace PhysXManager {
         PxCapsuleControllerDesc controllerDesc;
         controllerDesc.setToDefault();
 
-        controllerDesc.height = 5.0F;
+        controllerDesc.height = 3.0F;
         controllerDesc.radius = 2.0F;
         controllerDesc.position = { 5.0F, 5.0F, 5.0F };
         controllerDesc.material = mMaterial;

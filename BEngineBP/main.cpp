@@ -42,16 +42,16 @@ void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    //for (unsigned int i = 0; i != 5; ++i) {
-    //    for (unsigned int i2 = 0; i2 != 5; ++i2) {
-    //        int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-    //        Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
-    //        positionedEnt->SetPosition({ 5.0F * i, 0, 5.0F * i2});
-    //    }
-    //}
+    for (unsigned int i = 0; i != 5; ++i) {
+        for (unsigned int i2 = 0; i2 != 5; ++i2) {
+            int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+            Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
+            positionedEnt->SetPosition({ 5.0F * i, 0, 5.0F * i2});
+        }
+    }
 
     entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
-    //entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
+    entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
 
     entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
 
@@ -169,21 +169,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft, false) && (hit.block.actor->getType() == physx::PxActorType::eRIGID_DYNAMIC)) {
                     PxRigidDynamic* act = (PxRigidDynamic*)hit.block.actor;
 
-                    // Calculate the direction from the hit point to the object's center of mass
                     PxVec3 forceDir = hit.block.position - act->getGlobalPose().p;
 
-                    // Normalize the direction vector
                     forceDir.normalize();
                     forceDir *= -1;
 
-                    // Calculate the force magnitude (you may adjust this based on the desired effect)
                     PxReal forceMagnitude = 2500.0f;
 
-                    // Apply the force to the object
                     act->addForce(forceDir * forceMagnitude, physx::PxForceMode::eIMPULSE);
+                }  
+
+                if (ImGui::IsKeyPressed(ImGuiKey_MouseRight, false)) {
+
+
                 }
             }
-            
+
+            if (ImGui::IsKeyDown(ImGuiKey_P)) {
+                unsigned int ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+
+                Entity* entity = entityManager.GetEntity(ent);
+                PxTransform trans = entity->physicsActor->getGlobalPose();
+                
+                trans.p.x = cameraPos.x;
+                trans.p.y = cameraPos.y;
+                trans.p.z = cameraPos.z;
+
+                entity->physicsActor->setGlobalPose(trans);
+
+                PxRigidDynamic* dyn = (PxRigidDynamic*)entity->physicsActor;
+                dyn->addForce(unitDir);
+            }
+
+            Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
         }
 
         imOverlayManager.Proc();
@@ -379,21 +397,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Actor Num Static: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
                 ImGui::Text("Actor Num Dynamic: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
 
-                ImGui::Text("Mogliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
+                ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
                 ImGui::Text("Eyetrace Position: %f, %f, %f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
 
                 ImDrawList* bgList = ImGui::GetBackgroundDrawList();
                 float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, viewMat, perspectiveMat, windowWidth, windowHeight);
                 bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
 
+                PxExtendedVec3 playerPos = Globals::PhysX::mPlayerController->getPosition();
+                float2 playerProjection = BEngine::GuiLib::project3Dto2D({ (float)playerPos.x, (float)playerPos.y, (float)playerPos.z }, viewMat, perspectiveMat, windowWidth, windowHeight);
+                bgList->AddCircle({ playerProjection.x, playerProjection.y }, 2.0F, ImColor(0, 255, 0, 100));
+
             }
             ImGui::End();
-
-            //ImGui::Begin("Debug");
-            //{
-
-            //}
-            //ImGui::End();
         }
 
         ImGui::Render();

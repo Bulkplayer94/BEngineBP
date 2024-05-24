@@ -17,13 +17,13 @@ struct VS_Output
 };
 
 Texture2D mytexture : register(t0);
-SamplerState mysampler : register(s0)
-{
-    Filter = Anisotropic;
-    MaxAnisotropy = 16;
-    AddressU = Wrap;
-    AddressV = Wrap;
-};
+SamplerState mysampler : register(s0);
+//{
+//    Filter = Anisotropic;
+//    MaxAnisotropy = 16;
+//    AddressU = Wrap;
+//    AddressV = Wrap;
+//};
 
 VS_Output vs_main(VS_Input input)
 {
@@ -35,5 +35,6 @@ VS_Output vs_main(VS_Input input)
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
+    //return float4(1.0F, 0.0F, 0.0F, 1.0F);
     return mytexture.Sample(mysampler, input.uv);
 }
