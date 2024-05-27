@@ -114,7 +114,7 @@ void LoadRessources() {
     for (unsigned int i = 0; i != 20; ++i) {
         for (unsigned int i2 = 0; i2 != 20; ++i2) {
             for (unsigned int i3 = 0; i3 != 20; ++i3) {
-                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
                 positionedEnt->SetPosition({ -50.0F + (i * 5.0F), 0.0F + (i3 * 5.0F), -50.0F + (i2 * 5.0F)});
             }
