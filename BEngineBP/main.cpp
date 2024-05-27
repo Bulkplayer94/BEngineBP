@@ -30,6 +30,8 @@
 #include "MeshManager.h"
 #include "LuaManager.h"
 
+#include "ErrorReporter.h"
+
 #include <chrono>
 
 #include <thread>
@@ -38,22 +40,92 @@ FILE* stream;
 
 bool isLoading = true;
 
+using namespace physx;
+
+class ExplosionCallback : public PxSweepCallback {
+public:
+    ExplosionCallback(PxSweepHit* hits, PxU32 maxNbHits)
+        : PxSweepCallback(hits, maxNbHits) {}
+
+    virtual PxAgain processTouches(const PxSweepHit* buffer, PxU32 nbHits) override {
+        for (PxU32 i = 0; i < nbHits; ++i) {
+            const PxSweepHit& hit = buffer[i];
+           
+            PxTransform actorPos = hit.actor->getGlobalPose();
+
+            std::cout << std::format("Hit Actor at {}, {}, {}", actorPos.p.x, actorPos.p.y, actorPos.p.z) << std::endl;
+
+            PxRigidDynamic* act = (PxRigidDynamic*)hit.actor;
+
+
+            PxVec3 force = actorPos.p - explosionCenter;
+            force *= (500 / (force.magnitude() + 1));
+
+            act->addForce(force, PxForceMode::eIMPULSE);
+
+        }
+        return true;
+    }
+
+    PxVec3 explosionCenter;
+    
+};
+
+void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explosionStrength, float explosionRadius) {
+    PxSphereGeometry sphereGeom(explosionRadius);
+
+    const PxU32 maxNbHits = 256;
+    PxSweepHit hitBuffer[maxNbHits];
+
+    ExplosionCallback sweepCallback(hitBuffer, maxNbHits);
+    sweepCallback.explosionCenter = explosionCenter;
+
+    PxQueryFilterData filterData;
+    filterData.flags = PxQueryFlag::eDYNAMIC;
+
+    if (scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData)) {
+        std::cout << "Sweep found " << sweepCallback.nbTouches << " hits." << std::endl;
+
+        //for (PxU32 i = 0; i < sweepCallback.nbTouches; ++i) {
+        //    PxRigidDynamic* dynamicActor = sweepCallback.touches[i].actor->is<PxRigidDynamic>();
+        //    if (dynamicActor) {
+        //        PxVec3 actorPos = dynamicActor->getGlobalPose().p;
+        //        PxVec3 forceDirection = actorPos - explosionCenter;
+        //        float distance = forceDirection.normalize();
+
+        //        if (distance < explosionRadius) {
+        //            float forceMagnitude = explosionStrength * (1.0f - (distance / explosionRadius));
+        //            PxVec3 force = forceDirection * forceMagnitude;
+        //            dynamicActor->addForce(force, PxForceMode::eIMPULSE);
+        //        }
+        //    }
+        //}
+    }
+    else {
+        std::cout << "No hits found." << std::endl;
+    }
+}
+
+
 void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    for (unsigned int i = 0; i != 5; ++i) {
-        for (unsigned int i2 = 0; i2 != 5; ++i2) {
-            int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-            Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
-            positionedEnt->SetPosition({ 5.0F * i, 0, 5.0F * i2});
+    for (unsigned int i = 0; i != 20; ++i) {
+        for (unsigned int i2 = 0; i2 != 20; ++i2) {
+            for (unsigned int i3 = 0; i3 != 20; ++i3) {
+                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+                Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
+                positionedEnt->SetPosition({ -50.0F + (i * 5.0F), 0.0F + (i3 * 5.0F), -50.0F + (i2 * 5.0F)});
+            }
+            
         }
     }
 
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+    //                          
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
 
     isLoading = false;
 
@@ -152,11 +224,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         float3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
             PxVec3 origin = { cameraPos.x, cameraPos.y, cameraPos.z };
-            PxVec3 unitDir = {
-                cameraFwd.x,
-                cameraFwd.y,
-                cameraFwd.z
-            };
+            PxVec3 unitDir = { cameraFwd.x, cameraFwd.y, cameraFwd.z };
             PxReal maxDistance = 500.0F;
             PxRaycastBuffer hit;
 
@@ -170,27 +238,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                     PxRigidDynamic* act = (PxRigidDynamic*)hit.block.actor;
 
                     PxVec3 forceDir = hit.block.position - act->getGlobalPose().p;
-
                     forceDir.normalize();
                     forceDir *= -1;
 
                     PxReal forceMagnitude = 2500.0f;
-
                     act->addForce(forceDir * forceMagnitude, physx::PxForceMode::eIMPULSE);
-                }  
+                }
 
                 if (ImGui::IsKeyPressed(ImGuiKey_MouseRight, false)) {
+                    PxVec3 explosionCenter = { eyeTracePos.x, eyeTracePos.y, eyeTracePos.z };
+                    float explosionStrength = 2500.0f;
+                    float explosionRadius = 50.0f;
 
-
+                    performExplosion(Globals::PhysX::mScene, explosionCenter, explosionStrength, explosionRadius);
                 }
             }
 
             if (ImGui::IsKeyDown(ImGuiKey_P)) {
                 unsigned int ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-
                 Entity* entity = entityManager.GetEntity(ent);
                 PxTransform trans = entity->physicsActor->getGlobalPose();
-                
+
                 trans.p.x = cameraPos.x;
                 trans.p.y = cameraPos.y;
                 trans.p.z = cameraPos.z;
@@ -412,6 +480,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             ImGui::End();
         }
 
+        BEngine::errorReporter.Draw();
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
