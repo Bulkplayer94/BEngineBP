@@ -154,14 +154,12 @@
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="IMOverlayManager.cpp" />
-    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="LuaManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="PhysXManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="shader\SHADER_default.cpp" />
-    <ClCompile Include="Win32Manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameEvents.h" />
@@ -180,7 +178,6 @@
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="IMOverlayManager.h" />
-    <ClInclude Include="InputManager.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="MeshManager.h" />
@@ -188,7 +185,6 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="shader\SHADER_default.h" />
     <ClInclude Include="shader\SHADER_defines.h" />
-    <ClInclude Include="Win32Manager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\hook.lua" />

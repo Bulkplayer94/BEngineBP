@@ -75,12 +75,6 @@
     <ClCompile Include="GameEvents.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="Win32Manager.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DMaths.h">
@@ -150,12 +144,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="GameEvents.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32Manager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
