@@ -2,7 +2,6 @@
 
 #include <PxPhysicsAPI.h>
 #include "globals.h"
-#include "Shader.h"
 
 EntityManager entityManager = {};
 

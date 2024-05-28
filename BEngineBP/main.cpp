@@ -26,7 +26,6 @@
 
 #include "PhysXManager.h"
 
-#include "Shader.h"
 #include "MeshManager.h"
 #include "LuaManager.h"
 
@@ -110,7 +109,7 @@ void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    const unsigned int lenght = 10;
+    const unsigned int lenght = 50;
     const float startingPosition = -(static_cast<float>(lenght) / 2);
 
     for (unsigned int i = 0; i != lenght; ++i) {
