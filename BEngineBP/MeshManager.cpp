@@ -91,7 +91,10 @@ void MeshManager::StartLoading()
 		loadedMesh->modelName = meshName;
 		std::vector<float3> allVertices;
 		Assimp::Importer importer;
+		importer.SetPropertyFloat("scale", 2.0F);
 		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords);
+		
+
 		for (int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator) 
 		{
 			Model newModel;

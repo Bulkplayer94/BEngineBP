@@ -158,7 +158,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="PhysXManager.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="shader\SHADER_default.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -182,7 +181,6 @@
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="PhysXManager.h" />
-    <ClInclude Include="Shader.h" />
     <ClInclude Include="shader\SHADER_default.h" />
     <ClInclude Include="shader\SHADER_defines.h" />
   </ItemGroup>

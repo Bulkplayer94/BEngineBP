@@ -30,9 +30,6 @@
     <ClCompile Include="PhysXManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="shader\SHADER_default.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -90,9 +87,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="PhysXManager.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="shader\SHADER_default.h">

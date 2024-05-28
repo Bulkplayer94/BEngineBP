@@ -14,7 +14,7 @@
 #include <d3dcompiler.h>
 #include <assert.h>
 #include <stdint.h>
-//#include "3DManager.h"
+
 #include "shader/SHADER_default.h"
 #include "IMOverlayManager.h"
 #include "EntityManager.h"
@@ -56,7 +56,6 @@ public:
             std::cout << std::format("Hit Actor at {}, {}, {}", actorPos.p.x, actorPos.p.y, actorPos.p.z) << std::endl;
 
             PxRigidDynamic* act = (PxRigidDynamic*)hit.actor;
-
 
             PxVec3 force = actorPos.p - explosionCenter;
             force *= (500 / (force.magnitude() + 1));
@@ -111,12 +110,15 @@ void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    for (unsigned int i = 0; i != 20; ++i) {
-        for (unsigned int i2 = 0; i2 != 20; ++i2) {
-            for (unsigned int i3 = 0; i3 != 20; ++i3) {
-                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+    const unsigned int lenght = 10;
+    const float startingPosition = -(static_cast<float>(lenght) / 2);
+
+    for (unsigned int i = 0; i != lenght; ++i) {
+        for (unsigned int i2 = 0; i2 != lenght; ++i2) {
+            for (unsigned int i3 = 0; i3 != lenght; ++i3) {
+                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
-                positionedEnt->SetPosition({ -50.0F + (i * 5.0F), 0.0F + (i3 * 5.0F), -50.0F + (i2 * 5.0F)});
+                positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
             }
             
         }
@@ -124,7 +126,7 @@ void LoadRessources() {
 
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-    //                          
+
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
 
     isLoading = false;
@@ -150,7 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
     IMOverlayManager imOverlayManager;
 
-    BEngine::LoadAdvancedShaders(d3d11Device);
+    //BEngine::LoadAdvancedShaders(d3d11Device);
 
     SHADER DefaultShades = SHADER_DEFAULT::Load(Globals::Direct3D::d3d11Device);
 
@@ -254,8 +256,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 }
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_P)) {
-                unsigned int ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
+            if (ImGui::IsKeyPressed(ImGuiKey_P)) {
+                unsigned int ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 Entity* entity = entityManager.GetEntity(ent);
                 PxTransform trans = entity->physicsActor->getGlobalPose();
 
@@ -266,7 +268,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 entity->physicsActor->setGlobalPose(trans);
 
                 PxRigidDynamic* dyn = (PxRigidDynamic*)entity->physicsActor;
-                dyn->addForce(unitDir);
+                dyn->addForce(unitDir * 1000.0F, physx::PxForceMode::eIMPULSE);
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_1)) {
+                unsigned int spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
+                
+
             }
 
             Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
@@ -392,7 +400,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 cameraPitch = degreesToRadians(85);
             if (cameraPitch < -degreesToRadians(85))
                 cameraPitch = -degreesToRadians(85);
-
         }
 
         if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
