@@ -27,7 +27,7 @@ extern "C"
 		static int include(lua_State* L) {
 
 			std::string fileName = luaL_checkstring(L, 1);
-			
+
 			if (luaL_dofile(L, ("lua\\" + fileName).c_str()) != LUA_OK) {
 				std::cout << lua_tostring(L, -1) << std::endl;
 				lua_pushboolean(L, false);
@@ -107,9 +107,9 @@ extern "C"
 			};
 
 			static int LuaVector_new(lua_State* L) {
-				
+
 				LuaVector_t* luaVector = (LuaVector_t*)lua_newuserdata(L, sizeof(LuaVector_t));
-				
+
 				float x = luaL_checkinteger(L, 1);
 				float y = luaL_checkinteger(L, 2);
 				float z = luaL_checkinteger(L, 3);
@@ -150,97 +150,97 @@ extern "C"
 
 			}
 		}
-
-		namespace LuaEntity {
-			const char* LuaEntity_metaTable = "LuaEntity_metaTable";
-
-#define getLuaEntity(L, idx) \
-				LuaEntity_t* ent; \
-				{ \
-					LuaEntity_t** luaEnt = (LuaEntity_t**)luaL_checkudata(L, idx, LuaEntity_metaTable); \
-					if (!luaEnt || !*luaEnt) { \
-						lua_pushstring(L, "Invalid Datatype! Expected \"LuaEntity\""); \
-						return lua_error(L); \
-					} else { \
-						ent = *luaEnt; \
-					} \
-				} 
-
-			struct LuaEntity_t {
-				Entity* ent;
-				int entityID;
-
-				static int __gc(lua_State* L) {
-
-					getLuaEntity(L, 1);
-					std::cout << std::hex << (uintptr_t)ent << std::endl;;
-					return 0;
-
-				}
-
-				static int __tostring(lua_State* L) {
-
-					getLuaEntity(L, 1);
-					lua_pushstring(L, std::format("LuaEntity<{}>", ent->entityID).c_str());
-
-					return 1;
-
-				}
-
-				static int GetID(lua_State* L) {
-
-					getLuaEntity(L, 1);
-					lua_pushinteger(L, ent->entityID);
-
-					return 1;
-
-				}
-
-			};
-
-			static int LuaEntity_new(lua_State* L) {
-
-				LuaEntity_t* createdEnt = (LuaEntity_t*)lua_newuserdata(L, sizeof(LuaEntity_t));
-				int entityID = luaL_checkint(L, 1);
-
-				createdEnt->entityID = entityID;
-				createdEnt->ent = entityManager.GetEntity(entityID);
-
-				luaL_getmetatable(L, LuaEntity_metaTable);
-				lua_setmetatable(L, -2);
-
-				return 1;
-
-			}
-
-			static void register_LuaEntity(lua_State* L) {
-
-				luaL_newmetatable(L, LuaEntity_metaTable);
-
-				lua_pushstring(L, "__gc");
-				lua_pushcfunction(L, LuaEntity_t::__gc);
-				lua_settable(L, -3);
-
-				lua_pushstring(L, "__tostring");
-				lua_pushcfunction(L, LuaEntity_t::__tostring);
-				lua_settable(L, -3);
-
-				lua_pushstring(L, "__index");
-				lua_newtable(L);
-
-				lua_pushstring(L, "GetID");
-				lua_pushcfunction(L, LuaEntity_t::GetID);
-				lua_settable(L, -3);
-
-				lua_settable(L, -3);
-
-				lua_pop(L, 1);  // Metatable vom Stack entfernen
-
-				lua_register(L, "LuaEntity", LuaEntity_new);
-
-			}
-		}
 	}
+//		namespace LuaEntity {
+//			const char* LuaEntity_metaTable = "LuaEntity_metaTable";
+//
+//#define getLuaEntity(L, idx) \
+//				LuaEntity_t* ent; \
+//				{ \
+//					LuaEntity_t** luaEnt = (LuaEntity_t**)luaL_checkudata(L, idx, LuaEntity_metaTable); \
+//					if (!luaEnt || !*luaEnt) { \
+//						lua_pushstring(L, "Invalid Datatype! Expected \"LuaEntity\""); \
+//						return lua_error(L); \
+//					} else { \
+//						ent = *luaEnt; \
+//					} \
+//				} 
+//
+//			struct LuaEntity_t {
+//				Entity* ent;
+//				int entityID;
+//
+//				static int __gc(lua_State* L) {
+//
+//					getLuaEntity(L, 1);
+//					std::cout << std::hex << (uintptr_t)ent << std::endl;;
+//					return 0;
+//
+//				}
+//
+//				static int __tostring(lua_State* L) {
+//
+//					getLuaEntity(L, 1);
+//					lua_pushstring(L, std::format("LuaEntity<{}>", ent->entityID).c_str());
+//
+//					return 1;
+//
+//				}
+//
+//				static int GetID(lua_State* L) {
+//
+//					getLuaEntity(L, 1);
+//					lua_pushinteger(L, ent->entityID);
+//
+//					return 1;
+//
+//				}
+//
+//			};
+//
+//			static int LuaEntity_new(lua_State* L) {
+//
+//				LuaEntity_t* createdEnt = (LuaEntity_t*)lua_newuserdata(L, sizeof(LuaEntity_t));
+//				int entityID = luaL_checkint(L, 1);
+//
+//				createdEnt->entityID = entityID;
+//				createdEnt->ent = entityManager.GetEntity(entityID);
+//
+//				luaL_getmetatable(L, LuaEntity_metaTable);
+//				lua_setmetatable(L, -2);
+//
+//				return 1;
+//
+//			}
+//
+//			static void register_LuaEntity(lua_State* L) {
+//
+//				luaL_newmetatable(L, LuaEntity_metaTable);
+//
+//				lua_pushstring(L, "__gc");
+//				lua_pushcfunction(L, LuaEntity_t::__gc);
+//				lua_settable(L, -3);
+//
+//				lua_pushstring(L, "__tostring");
+//				lua_pushcfunction(L, LuaEntity_t::__tostring);
+//				lua_settable(L, -3);
+//
+//				lua_pushstring(L, "__index");
+//				lua_newtable(L);
+//
+//				lua_pushstring(L, "GetID");
+//				lua_pushcfunction(L, LuaEntity_t::GetID);
+//				lua_settable(L, -3);
+//
+//				lua_settable(L, -3);
+//
+//				lua_pop(L, 1);  // Metatable vom Stack entfernen
+//
+//				lua_register(L, "LuaEntity", LuaEntity_new);
+//
+//			}
+//		}
+//	}
 
 	static const struct luaL_Reg lua_BLib[]{
 		{"print", &BLua::print},
@@ -260,7 +260,7 @@ void luaL_openBLib(lua_State* L) {
 	lua_pop(L, 1);
 
 	BLua::LuaVector::register_LuaVector(L);
-	BLua::LuaEntity::register_LuaEntity(L);
+	//BLua::LuaEntity::register_LuaEntity(L);
 
 }
 

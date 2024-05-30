@@ -109,14 +109,13 @@ void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    const unsigned int lenght = 50;
+    const unsigned int lenght = 2;
     const float startingPosition = -(static_cast<float>(lenght) / 2);
 
     for (unsigned int i = 0; i != lenght; ++i) {
         for (unsigned int i2 = 0; i2 != lenght; ++i2) {
             for (unsigned int i3 = 0; i3 != lenght; ++i3) {
-                int createdEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
-                Entity* positionedEnt = entityManager.GetEntity(std::abs(createdEnt));
+                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
             }
             
@@ -256,8 +255,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_P)) {
-                unsigned int ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
-                Entity* entity = entityManager.GetEntity(ent);
+                Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 PxTransform trans = entity->physicsActor->getGlobalPose();
 
                 trans.p.x = cameraPos.x;
@@ -271,7 +269,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                unsigned int spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
+                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
                 
 
             }

@@ -20,15 +20,10 @@ struct Entity {
 };
 
 struct EntityManager {
-	std::unordered_map<unsigned int, Entity> registeredEntitys;
+	std::vector<Entity*> registeredEntitys;
 	unsigned int entitySize = 0;
 
-	Entity* GetEntity(unsigned int entityID) {
-		return &registeredEntitys[entityID];
-	}
-
-	unsigned int RegisterEntity(BEngine::Mesh* mMesh, bool isStatic, float3 entityPos = {0.0F, 0.0F, 0.0F});
-
+	Entity* RegisterEntity(BEngine::Mesh* mMesh, bool isStatic, float3 entityPos = {0.0F, 0.0F, 0.0F});
 
 	enum LightType_ {
 		LightType_NONE,
@@ -39,4 +34,6 @@ struct EntityManager {
 	//unsigned int RegisterLight(float3 lightPos, float3 lightAngle, float3 lightColor, float lightStrenght);
 
 	void Draw(SHADER* shader, BEngine::MeshManager* meshManager, float4x4* viewMat, float4x4* perspMat);
+	
+	void Sort();
 } extern entityManager;

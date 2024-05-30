@@ -36,6 +36,7 @@ union float4x4
 {
     float m[4][4];
     float4 cols[4];
+    float colsT[16];
 
     inline float4 row(int i) { // Returns i-th row of matrix
         return { m[0][i], m[1][i], m[2][i], m[3][i] };

@@ -109,14 +109,14 @@ void MeshManager::StartLoading()
 
 				float vertexU, vertexV;
 
-				if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
-					vertexU = mesh->mTangents[vertexIterator].x;
-					vertexV = mesh->mBitangents[vertexIterator].y;
+				if (mesh->mNumUVComponents[scene_iterator] > vertexIterator) {
+					vertexU = mesh->mTextureCoords[scene_iterator][vertexIterator].x;
+					vertexV = mesh->mTextureCoords[scene_iterator][vertexIterator].y;
 				}
 				else {
-					if (mesh->mNumUVComponents[scene_iterator] > vertexIterator) {
-						vertexU = mesh->mTextureCoords[scene_iterator][vertexIterator].x;
-						vertexV = mesh->mTextureCoords[scene_iterator][vertexIterator].y;
+					if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
+						vertexU = mesh->mTangents[vertexIterator].x;
+						vertexV = mesh->mBitangents[vertexIterator].y;
 					} else 
 					{
 						vertexU = 0.0F;

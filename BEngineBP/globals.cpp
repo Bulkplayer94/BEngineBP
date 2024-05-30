@@ -230,17 +230,17 @@ bool Globals::Direct3D::initDirect3D() {
     // ID3D11SamplerState* samplerState;
     {
         D3D11_SAMPLER_DESC samplerDesc = {};
-        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
-        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
-        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP; //D3D11_TEXTURE_ADDRESS_CLAMP;
+        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         samplerDesc.BorderColor[0] = 1.0f;
         samplerDesc.BorderColor[1] = 1.0f;
         samplerDesc.BorderColor[2] = 1.0f;
         samplerDesc.BorderColor[3] = 1.0f;
         samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-        //samplerDesc.MaxLOD = 50;
-        //samplerDesc.MinLOD = -50;  
+        samplerDesc.MinLOD = 0; // Setze MinLOD und MaxLOD auf ihre Standardwerte
+        samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
         d3d11Device->CreateSamplerState(&samplerDesc, &samplerState);
     }
@@ -248,11 +248,16 @@ bool Globals::Direct3D::initDirect3D() {
     // ID3D11RasterizerState* rasterizerState;
     {
         D3D11_RASTERIZER_DESC rasterizerDesc = {};
-        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-        rasterizerDesc.CullMode = D3D11_CULL_BACK;
-        rasterizerDesc.FrontCounterClockwise = TRUE;
-        //
-        // rasterizerDesc.AntialiasedLineEnable = TRUE;
+        rasterizerDesc.FillMode = D3D11_FILL_SOLID; // Fülle die Dreiecke
+        rasterizerDesc.CullMode = D3D11_CULL_BACK; // Aktiviere Backface Culling
+        rasterizerDesc.FrontCounterClockwise = TRUE; // Die Dreiecksnormalen zeigen im Uhrzeigersinn (standardmäßig)
+        rasterizerDesc.DepthBias = 0;
+        rasterizerDesc.DepthBiasClamp = 0.0f;
+        rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+        rasterizerDesc.DepthClipEnable = TRUE;
+        rasterizerDesc.ScissorEnable = FALSE;
+        rasterizerDesc.MultisampleEnable = FALSE;
+        rasterizerDesc.AntialiasedLineEnable = FALSE;
 
         d3d11Device->CreateRasterizerState(&rasterizerDesc, &rasterizerState);
     }
