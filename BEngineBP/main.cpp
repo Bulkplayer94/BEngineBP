@@ -109,7 +109,7 @@ void LoadRessources() {
     
     BEngine::meshManager.StartLoading();
 
-    const unsigned int lenght = 2;
+    const unsigned int lenght = 30;
     const float startingPosition = -(static_cast<float>(lenght) / 2);
 
     for (unsigned int i = 0; i != lenght; ++i) {
@@ -121,6 +121,8 @@ void LoadRessources() {
             
         }
     }
+
+    //Entity* spawnedWareHouse = entityManager.RegisterEntity(BEngine::meshManager.meshList["warehouse"], true);
 
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
@@ -213,12 +215,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         }
 
         auto start = std::chrono::high_resolution_clock::now();
-
         if (!isLoading) {
             Globals::PhysX::mScene->simulate(dt);
             Globals::PhysX::mScene->fetchResults(true);
         }
-
         long long mögliche_leistung = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
 
         float3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
@@ -410,7 +410,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         FLOAT backgroundColor[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
         d3d11DeviceContext->ClearRenderTargetView(d3d11FrameBufferView, backgroundColor);
 
-
         d3d11DeviceContext->ClearDepthStencilView(depthBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
         D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)windowWidth, (FLOAT)windowHeight, 0.0f, 1.0f };
@@ -445,22 +444,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 std::string delta = "DeltaTime: " + std::to_string(dt);
                 ImGui::Text(delta.c_str());
 
-                static float smoothFPS = 30;
-                smoothFPS -= (smoothFPS - (1 / dt)) * dt * 0.8F;
-                std::string FPS = "FPS: " + std::to_string(smoothFPS);
-                ImGui::Text(FPS.c_str());
+                static float smoothFPS = 60.0F;
+                smoothFPS -= (smoothFPS - (1.0F / dt)) * dt * 0.8F;
 
-                std::string vecPos = "Pos: " + std::to_string(cameraPos.x) + " " + std::to_string(cameraPos.y) + " " + std::to_string(cameraPos.z);
-                ImGui::Text(vecPos.c_str());
+                static float counter = 0;
+                counter += dt;
 
-                std::string vecFwd = "Fwd: " + std::to_string(cameraFwd.x) + " " + std::to_string(cameraFwd.y) + " " + std::to_string(cameraFwd.z);
-                ImGui::Text(vecFwd.c_str());
+                static float maxFPS = 0.0F;
+                static float minFPS = 1000000000.0F;
+                const float FPS = (1.0F / dt);
 
-                std::string vecPitch = "Pit: " + std::to_string(cameraPitch);
-                ImGui::Text(vecPitch.c_str());
+                if (counter > 0.5F) {
+                    if (maxFPS < smoothFPS)
+                        maxFPS = smoothFPS;
 
-                std::string vecYaw = "Yaw: " + std::to_string(cameraYaw);
-                ImGui::Text(vecYaw.c_str());
+                    if (minFPS > smoothFPS)
+                        minFPS = smoothFPS;
+                }
+                
+
+                ImGui::Text("Max FPS: %.4f", maxFPS);
+                ImGui::Text("Min FPS: %.4f", minFPS);
+                
+
+
+                ImGui::Text("FPS: %.2f", smoothFPS);
+                ImGui::Text("Pos: %.2f, %.2f, %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
+                ImGui::Text("Fwd: %.2f, %.2f, %.2f", cameraFwd.x, cameraFwd.y, cameraFwd.z);
+                ImGui::Text("Pit: %.2f", cameraPitch);
+                ImGui::Text("Yaw: %.2f", cameraYaw);
 
                 ImGui::SliderFloat("Maus Empfindlichkeit", &mouseSensitivity, 0, 100);
 
@@ -470,7 +482,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Actor Num Dynamic: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
 
                 ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
-                ImGui::Text("Eyetrace Position: %f, %f, %f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
+                ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
 
                 ImDrawList* bgList = ImGui::GetBackgroundDrawList();
                 float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, viewMat, perspectiveMat, windowWidth, windowHeight);

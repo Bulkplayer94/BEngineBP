@@ -66,7 +66,7 @@ namespace PhysXManager {
         // Erstelle die PxScene
         PxSceneDesc sceneDesc(mPhysics->getTolerancesScale());
         sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-        sceneDesc.cpuDispatcher = PxDefaultCpuDispatcherCreate(2);
+        sceneDesc.cpuDispatcher = PxDefaultCpuDispatcherCreate(6);
         sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 
         mScene = mPhysics->createScene(sceneDesc);

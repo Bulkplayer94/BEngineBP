@@ -40,64 +40,34 @@ float4x4 PxTransformToFloat4x4Alt(const PxTransform& transform) {
 
 	PxMat44 transformMat = (PxMat44)transform;
 	transformMat = transformMat.getTranspose();
+
 	float4x4 transMat;
-
 	for (unsigned int I = 0; I != 5; ++I) {
-		for (unsigned int I2 = 0; I2 != 5; ++I2) {
-			switch (I) {
-			case(0):
-				transMat.m[0][I2] = transformMat.column0[I2];
-				break;
-
-			case(1):
-				transMat.m[1][I2] = transformMat.column1[I2];
-				break;
-
-			case(2):
-				transMat.m[2][I2] = transformMat.column2[I2];
-				break;
-
-			case(3):
-				transMat.m[3][I2] = transformMat.column3[I2];
-				break;
-			}
-		}
+		const PxVec4& floatding = transformMat[I];
+		transMat.cols[I] = { floatding[0], floatding[1], floatding[2], floatding[3] };
 	}
 
-	// Extrahiere die Translation und Rotation aus der PxTransform
-	//PxVec3 translation = transform.p;
-	//PxQuat rotation = transform.q;
+	//for (unsigned int I = 0; I != 5; ++I) {
+	//	for (unsigned int I2 = 0; I2 != 5; ++I2) {
+	//		switch (I) {
+	//		case(0):
+	//			transMat.m[0][I2] = transformMat.column0[I2];
+	//			break;
 
-	//// Extrahiere die Rotationskomponenten aus der Quaternion
-	//float qx = rotation.x;
-	//float qy = rotation.y;
-	//float qz = rotation.z;
-	//float qw = rotation.w;
+	//		case(1):
+	//			transMat.m[1][I2] = transformMat.column1[I2];
+	//			break;
 
-	//// Berechne die Rotationsmatrix aus den Quaternionkomponenten
-	//float rotationMatrix[3][3] = {
-	//	{1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw)},
-	//	{2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw)},
-	//	{2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy)}
-	//};
+	//		case(2):
+	//			transMat.m[2][I2] = transformMat.column2[I2];
+	//			break;
 
-	//// Erstelle die Gesamtmatrix (rotierte Translationsmatrix)
-	//float4x4 translateMatrix;
-	//// Setze die Rotationskomponenten in Column-Major-Ordnung
-	//for (int i = 0; i < 3; ++i) {
-	//	for (int j = 0; j < 3; ++j) {
-	//		translateMatrix.m[j][i] = rotationMatrix[j][i]; // Spaltenweise Anordnung
+	//		case(3):
+	//			transMat.m[3][I2] = transformMat.column3[I2];
+	//			break;
+	//		}
 	//	}
 	//}
-	//// Setze die Translationskomponenten
-	//translateMatrix.m[0][3] = translation.x;
-	//translateMatrix.m[1][3] = translation.y;
-	//translateMatrix.m[2][3] = translation.z;
-	//// Setze den Rest der Matrix auf Identität
-	//translateMatrix.m[3][0] = 0.0f;
-	//translateMatrix.m[3][1] = 0.0f;
-	//translateMatrix.m[3][2] = 0.0f;
-	//translateMatrix.m[3][3] = 1.0f;
 
 	return transMat;
 }
@@ -111,11 +81,11 @@ void EntityManager::Draw(SHADER* shader, BEngine::MeshManager* meshManager, floa
 {
 	using namespace Globals::Direct3D;
 	
-	float4x4 viewPerspMat = *viewMat * *perspMat;
+	const float4x4& viewPerspMat = *viewMat * *perspMat;
 
 	for (auto& I : registeredEntitys)
 	{
-		float4x4 modelViewProj = PxTransformToFloat4x4Alt(I->physicsActor->getGlobalPose()) * viewPerspMat;
+		const float4x4& modelViewProj = PxTransformToFloat4x4Alt(I->physicsActor->getGlobalPose()) * viewPerspMat;
 
 		for (auto& meshPart : I->modelMesh->models) {
 			shader->sContextFunc(d3d11DeviceContext, &currentShader);
