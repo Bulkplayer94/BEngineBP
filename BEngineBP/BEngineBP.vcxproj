@@ -145,7 +145,6 @@
   <ItemGroup>
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="ErrorReporter.cpp" />
-    <ClCompile Include="GameEvents.cpp" />
     <ClCompile Include="globals.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
@@ -160,10 +159,10 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="PhysXManager.cpp" />
+    <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="shader\SHADER_default.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameEvents.h" />
     <ClInclude Include="GuiLib.h" />
     <ClInclude Include="3DMaths.h" />
     <ClInclude Include="EntityManager.h" />
@@ -183,6 +182,7 @@
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="PhysXManager.h" />
+    <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="shader\SHADER_default.h" />
     <ClInclude Include="shader\SHADER_defines.h" />
   </ItemGroup>

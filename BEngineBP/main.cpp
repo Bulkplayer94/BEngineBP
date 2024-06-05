@@ -28,6 +28,7 @@
 
 #include "MeshManager.h"
 #include "LuaManager.h"
+#include "ShaderManager.h"
 
 #include "ErrorReporter.h"
 
@@ -106,7 +107,8 @@ void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explo
 
 
 void LoadRessources() {
-    
+
+    BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
     const unsigned int lenght = 30;

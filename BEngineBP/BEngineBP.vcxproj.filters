@@ -69,7 +69,7 @@
     <ClCompile Include="ErrorReporter.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="GameEvents.cpp">
+    <ClCompile Include="ShaderManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -137,7 +137,7 @@
     <ClInclude Include="GuiLib.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="GameEvents.h">
+    <ClInclude Include="ShaderManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
