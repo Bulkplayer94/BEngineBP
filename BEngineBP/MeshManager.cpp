@@ -191,6 +191,13 @@ void MeshManager::StartLoading()
 
 		convexMesh->release();
 
+		if (jsonData.contains("defaultShader") && shaderManager.shaderList.contains(jsonData["defaultShader"])) {
+			loadedMesh->defaultShader = &shaderManager.shaderList[jsonData["defaultShader"]];
+		}
+		else {
+			loadedMesh->defaultShader = &shaderManager.shaderList["default"];
+		}
+
 		this->meshList[meshName] = loadedMesh;
 	}
 }

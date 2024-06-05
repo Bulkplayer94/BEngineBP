@@ -22,6 +22,37 @@ namespace ConstantBuffers {
 
 void ShaderManager::StartLoading()
 {
+	{
+		D3D11_BUFFER_DESC constantBufferDesc = {};
+		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::ModelViewCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		
+		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &modelViewBuffer);
+		if (FAILED(hResult))
+			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creatíon of ModelViewProj Buffer failed!");
+
+		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(0, 0, &animationBuffer);
+		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(0, 0, &animationBuffer);
+	}
+
+	{
+		D3D11_BUFFER_DESC constantBufferDesc = {};
+		// ByteWidth must be a multiple of 16, per the docs
+		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::AnimationCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &animationBuffer);
+		if (FAILED(hResult))
+			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Animation Buffer Failed!");
+
+		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(1, 0, &animationBuffer);
+		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(1, 0, &animationBuffer);
+	}
+
 	std::filesystem::directory_iterator dirIterator("data\\shader");
 	for (auto& I : dirIterator) {
 		if (!I.is_regular_file())
@@ -116,18 +147,19 @@ void ShaderManager::Proc() {
 	}
 }
 
-ShaderManager::Shader* ShaderManager::GetShader(std::string shaderName)
-{
-	return &shaderList[shaderName];
-}
+static std::string currentShader = "";
 
-void ShaderManager::Shader::SetContext(const float4x4& modelViewProj)
+void Shader::SetContext(const float4x4& modelViewProj)
 {
 	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
 
-	ctx->IASetInputLayout(this->inputLayout);
-	ctx->VSSetShader(this->vertexShader, NULL, 1);
-	ctx->PSSetShader(this->pixelShader, NULL, 1);
+	if (strcmp(currentShader.c_str(), shaderName.c_str()) == 0) {
+		ctx->IASetInputLayout(inputLayout);
+		ctx->VSSetShader(vertexShader, NULL, 1);
+		ctx->PSSetShader(pixelShader, NULL, 1);
+		
+		currentShader = shaderName;
+	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 	ctx->Map(shaderManager.modelViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);

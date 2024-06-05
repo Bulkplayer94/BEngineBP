@@ -4,30 +4,29 @@
 #include <map>
 #include <string>
 #include <PxPhysicsAPI.h>
-
-struct Shader;
+#include "ShaderManager.h"
 
 namespace BEngine {
 
 	struct Texture {
 
 		// RGB "Color" of the Model
-		ID3D11ShaderResourceView* diffuseMap;
+		ID3D11ShaderResourceView* diffuseMap = nullptr;
 
 		// Depth of the Model (Reduces Mesh Komplexity)
-		ID3D11ShaderResourceView* normalMap;
+		ID3D11ShaderResourceView* normalMap = nullptr;
 
 		// Reflexion of Light
-		ID3D11ShaderResourceView* specularMap;
+		ID3D11ShaderResourceView* specularMap = nullptr;
 
 		// The Shader that will Render the Texture
-		Shader* drawShader;
+		Shader* drawShader = nullptr;
 
 	};
 
 	struct Model {
 
-		Texture modelTexture;
+		Texture modelTexture = {};
 
 		ID3D11Buffer* vertexBuffer = nullptr;
 		ID3D11Buffer* indiceBuffer = nullptr;
@@ -46,6 +45,8 @@ namespace BEngine {
 
 		// The Physics Model
 		physx::PxShape* physicsModel = nullptr;
+
+		Shader* defaultShader = nullptr;
 
 		void AddModel(Model& mdl) {
 			models.emplace_back(mdl);

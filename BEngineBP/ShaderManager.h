@@ -4,27 +4,29 @@
 #include <map>
 #include <string>
 #include "data/shader/cb_shader_defines.hlsli"
+#include "3DMaths.h"
 
 namespace BEngine {
+	struct Shader {
+		ID3D11VertexShader* vertexShader;
+		ID3D11PixelShader* pixelShader;
+
+		ID3D11InputLayout* inputLayout;
+
+		std::string shaderName;
+
+		void SetContext(const float4x4& modelViewProj);
+	};
+
 	struct ShaderManager {
-		struct Shader {
-			ID3D11VertexShader* vertexShader;
-			ID3D11PixelShader* pixelShader;
-
-			ID3D11InputLayout* inputLayout;
-
-			void SetContext(const float4x4& modelViewProj);
-		};
 
 		void StartLoading();
 		void Proc();
-		Shader* GetShader(std::string shaderName);
-
-	private:
-		std::map<std::string, Shader> shaderList;
 
 		ID3D11Buffer* modelViewBuffer;
 		ID3D11Buffer* animationBuffer;
+
+		std::map<std::string, Shader> shaderList;
 
 	} extern shaderManager;
 }
