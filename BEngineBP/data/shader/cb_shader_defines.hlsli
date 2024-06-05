@@ -1,0 +1,1 @@
+#define LIGHTS_COUNT 16

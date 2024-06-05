@@ -80,6 +80,11 @@ namespace Globals {
 		extern int loadingStatus;
 	}
 
+	namespace Animation {
+		extern float deltaTime;
+		extern long double currTime;
+	}
+
 	namespace PhysX {
 		using namespace physx;
 

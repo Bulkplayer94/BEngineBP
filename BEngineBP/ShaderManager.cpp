@@ -11,14 +11,14 @@ ShaderManager BEngine::shaderManager = {};
 namespace ConstantBuffers {
 	struct AnimationCBuffer {
 		float deltaTime;
-		float currTime;
+		double currTime;
 	};
 
 	struct ModelViewCBuffer {
 		float4x4 modelViewMatrix;
 	};
 }
-
+                                  
 
 void ShaderManager::StartLoading()
 {
@@ -43,7 +43,7 @@ void ShaderManager::StartLoading()
 
 		Shader* compiledShader = &shaderList[fileName];
 
-		if (strcmp(shortFront.c_str(), "vs_") != 0) {
+		if (strcmp(shortFront.c_str(), "vs_") == 0) {
 			ID3D11Device* d3d11Device = Globals::Direct3D::d3d11Device;
 
 			ID3DBlob* shaderCompilerBlob;
@@ -81,7 +81,7 @@ void ShaderManager::StartLoading()
 			vertexShaderBlob->Release();
 		}
 
-		if (strcmp(shortFront.c_str(), "ps_") != 0) {
+		if (strcmp(shortFront.c_str(), "ps_") == 0) {
 			ID3D11Device* d3d11Device = Globals::Direct3D::d3d11Device;
 
 			ID3DBlob* shaderCompilerBlob;
@@ -94,7 +94,7 @@ void ShaderManager::StartLoading()
 				continue;
 			}
 
-			hResult = d3d11Device->CreateVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), NULL, &compiledShader->vertexShader);
+			hResult = d3d11Device->CreatePixelShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), NULL, &compiledShader->pixelShader);
 			if (FAILED(hResult)) {
 				errorReporter.Report(ErrorReporter::ErrorLevel_MEDIUM, "Shader Compiler Error");
 				continue;
@@ -103,7 +103,35 @@ void ShaderManager::StartLoading()
 	}
 }
 
+void ShaderManager::Proc() {
+	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
+
+	{
+		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+		ctx->Map(animationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+		ConstantBuffers::AnimationCBuffer* buffer = (ConstantBuffers::AnimationCBuffer*)mappedSubresource.pData;
+		buffer->deltaTime = Globals::Animation::deltaTime;
+		buffer->currTime = (double)Globals::Animation::currTime;
+		ctx->Unmap(animationBuffer, 0);
+	}
+}
+
 ShaderManager::Shader* ShaderManager::GetShader(std::string shaderName)
 {
 	return &shaderList[shaderName];
+}
+
+void ShaderManager::Shader::SetContext(const float4x4& modelViewProj)
+{
+	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
+
+	ctx->IASetInputLayout(this->inputLayout);
+	ctx->VSSetShader(this->vertexShader, NULL, 1);
+	ctx->PSSetShader(this->pixelShader, NULL, 1);
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+	ctx->Map(shaderManager.modelViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+	ConstantBuffers::ModelViewCBuffer* buffer = (ConstantBuffers::ModelViewCBuffer*)mappedSubresource.pData;
+	buffer->modelViewMatrix = modelViewProj;
+	ctx->Unmap(shaderManager.modelViewBuffer, 0);
 }

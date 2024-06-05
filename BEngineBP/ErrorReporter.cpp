@@ -36,7 +36,7 @@ void ErrorReporter::Draw()
 			textCol = ImColor(255, 255, 255);
 		}
 
-		ImGui::TextColored(textCol, "%s", I.second);
+		ImGui::TextColored(textCol, I.second.c_str());
 	}
 
 	ImGui::End();

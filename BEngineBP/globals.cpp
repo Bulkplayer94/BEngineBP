@@ -44,6 +44,11 @@ namespace Globals {
         PxCapsuleController* mPlayerController = nullptr;
 
     }
+
+    namespace Animation {
+        float deltaTime = 0.0F;
+        long double currTime = 0.0L;
+    }
 }
 
 bool Globals::initGlobals(HINSTANCE hInstance) {

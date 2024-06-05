@@ -111,7 +111,12 @@ void LoadRessources() {
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
+#ifndef _DEBUG
     const unsigned int lenght = 30;
+#else
+    const unsigned int lenght = 5;
+#endif
+
     const float startingPosition = -(static_cast<float>(lenght) / 2);
 
     for (unsigned int i = 0; i != lenght; ++i) {
@@ -205,6 +210,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             dt = (float)(currentTimeInSeconds - previousTimeInSeconds);
             //if (dt > (1.f / 60.f))
             //    dt = (1.f / 60.f);
+
+            Globals::Animation::deltaTime = dt;
+            Globals::Animation::currTime = currentTimeInSeconds;
         }
 
         MSG msg = {};
