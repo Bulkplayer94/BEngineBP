@@ -83,7 +83,7 @@ void MeshManager::StartLoading()
 		if (!jsonData.contains("modelMesh") || !jsonData.contains("material"))
 			continue;
 
-		// Because the Standard Filesystem gives / and not \ why tho?
+		// Because the Standard File system gives / and not \ why tho?
 
 		std::string meshName = pathString.substr(pathString.find_last_of('/') + 1, pathString.size());
 
@@ -92,36 +92,33 @@ void MeshManager::StartLoading()
 		std::vector<float3> allVertices;
 		Assimp::Importer importer;
 		importer.SetPropertyFloat("scale", 2.0F);
-		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords);
+		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals);
 		
 
-		for (int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator) 
+		for (unsigned int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator)
 		{
 			Model newModel;
-			
+
 			const aiMesh* mesh = scene->mMeshes[scene_iterator];
 
 			std::vector<VertexData> vertexVec;
-			for (int vertexIterator = 0; vertexIterator < mesh->mNumVertices; ++vertexIterator) 
+			for (unsigned int vertexIterator = 0; vertexIterator < mesh->mNumVertices; ++vertexIterator)
 			{
 				aiVector3D vertexP = mesh->mVertices[vertexIterator];
-				aiVector3D vertexN = mesh->mNormals[vertexIterator];
-
-				float vertexU, vertexV;
-
-				if (mesh->mNumUVComponents[scene_iterator] > vertexIterator) {
-					vertexU = mesh->mTextureCoords[scene_iterator][vertexIterator].x;
-					vertexV = mesh->mTextureCoords[scene_iterator][vertexIterator].y;
+				aiVector3D vertexN = { 0,0,0 };
+				if (mesh->HasNormals()) {
+					vertexN = mesh->mNormals[vertexIterator];
 				}
-				else {
-					if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
-						vertexU = mesh->mTangents[vertexIterator].x;
-						vertexV = mesh->mBitangents[vertexIterator].y;
-					} else 
-					{
-						vertexU = 0.0F;
-						vertexV = 0.0F;
-					}
+
+				float vertexU = 0.0F, vertexV = 0.0F;
+
+				if (mesh->mTextureCoords[0]) {
+					vertexU = mesh->mTextureCoords[0][vertexIterator].x;
+					vertexV = mesh->mTextureCoords[0][vertexIterator].y;
+				}
+				else if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
+					vertexU = mesh->mTangents[vertexIterator].x;
+					vertexV = mesh->mBitangents[vertexIterator].y;
 				}
 
 				vertexVec.push_back({
@@ -134,10 +131,12 @@ void MeshManager::StartLoading()
 			}
 
 			std::vector<unsigned int> indiceVec;
-			for (int faceIterator = 0; faceIterator < mesh->mNumFaces; ++faceIterator) {
-				aiFace* face = &mesh->mFaces[faceIterator];
-				for (unsigned int indiceIterator = 0; indiceIterator < face->mNumIndices; ++indiceIterator) {
-					indiceVec.push_back(face->mIndices[indiceIterator]);
+			for (unsigned int faceIterator = 0; faceIterator < mesh->mNumFaces; ++faceIterator)
+			{
+				const aiFace& face = mesh->mFaces[faceIterator];
+				for (unsigned int indiceIterator = 0; indiceIterator < face.mNumIndices; ++indiceIterator)
+				{
+					indiceVec.push_back(face.mIndices[indiceIterator]);
 				}
 			}
 
@@ -161,7 +160,7 @@ void MeshManager::StartLoading()
 
 			hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newModel.indiceBuffer);
 			if (FAILED(hResult))
-				assert("Indice Buffer Creation Failed");
+				assert("indices Buffer Creation Failed");
 
 			std::vector<float3> collisionVertex;
 			for (unsigned int I = 0; I < vertexVec.size(); ++I) {
@@ -169,12 +168,15 @@ void MeshManager::StartLoading()
 				collisionVertex.push_back({ currElem.pos[0], currElem.pos[1], currElem.pos[2] });
 			}
 
-			newModel.modelTexture.diffuseMap = LoadTexture(std::string(pathString) + std::string("\\") + std::string(jsonData["material"]["volume"]));
+			newModel.modelTexture.diffuseMap = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["volume"]));
 			newModel.numIndices = indiceVec.size();
 
+			modelNums++;
+			newModel.modelID = modelNums;
+
 			loadedMesh->AddModel(newModel);
-			
 		}
+
 
 		PxConvexMeshDesc convexMeshDesc;
 		convexMeshDesc.points.count = allVertices.size();
@@ -197,6 +199,9 @@ void MeshManager::StartLoading()
 		else {
 			loadedMesh->defaultShader = &shaderManager.shaderList["default"];
 		}
+
+		modelNums++;
+		loadedMesh->modelID = modelNums;
 
 		this->meshList[meshName] = loadedMesh;
 	}

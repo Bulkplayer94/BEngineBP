@@ -36,6 +36,8 @@ namespace BEngine {
 		// Shader that will be used to Draw the Model
 		Shader* shader = nullptr;
 
+		unsigned int modelID = 0;
+
 	};
 
 	struct Mesh {
@@ -52,10 +54,13 @@ namespace BEngine {
 			models.emplace_back(mdl);
 		}
 
+		unsigned int modelID = 0;
+
 	};
 
 	struct MeshManager {
 		std::map<std::string, Mesh*> meshList;
+		unsigned int modelNums = 0;
 
 		void StartLoading();
 

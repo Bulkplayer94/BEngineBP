@@ -8,7 +8,7 @@
 #include <d3d11.h>
 #include "../3DMaths.h"
 
-typedef void(*SHADER_UPDATE_BUFFER)(ID3D11DeviceContext*, float4x4);
+typedef void(*SHADER_UPDATE_BUFFER)(ID3D11DeviceContext* d3d11DeviceContext, const float4x4* ModelViewProj, const float4x4* worldMat, const float4x4* perspMat, const float4x4* viewMat);
 typedef void(*SHADER_SET_CONTEXT)(ID3D11DeviceContext*, std::string*);
 
 

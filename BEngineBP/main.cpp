@@ -33,12 +33,12 @@
 #include "ErrorReporter.h"
 
 #include <chrono>
-
 #include <thread>
+#include <atomic>
 
 FILE* stream;
 
-bool isLoading = true;
+std::atomic<bool> isLoading = true;
 
 using namespace physx;
 
@@ -112,7 +112,7 @@ void LoadRessources() {
     BEngine::meshManager.StartLoading();
 
 #ifndef _DEBUG
-    const unsigned int lenght = 30;
+    const unsigned int lenght = 40;
 #else
     const unsigned int lenght = 5;
 #endif
@@ -125,7 +125,6 @@ void LoadRessources() {
                 Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
                 positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
             }
-            
         }
     }
 
@@ -279,7 +278,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
+                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
                 
 
             }

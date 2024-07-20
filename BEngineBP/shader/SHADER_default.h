@@ -17,10 +17,13 @@ namespace SHADER_DEFAULT {
     
     struct CSBuffer {
         float4x4 modelViewProj;
+        float4x4 worldMat;
+        float4x4 perspMat;
+        float4x4 viewMat;
     };
 
     inline void setContext(ID3D11DeviceContext* d3d11DeviceContext, std::string* currentShader);
-    inline void updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, float4x4 mdlPMat);
+    inline void updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, const float4x4* modelViewProj, const float4x4* worldMat, const float4x4* perspMat, const float4x4* viewMat);
     inline SHADER Load(ID3D11Device* d3d11Device);
 }
 
@@ -40,16 +43,17 @@ void SHADER_DEFAULT::setContext(ID3D11DeviceContext* d3d11DeviceContext, std::st
 
 }
 
-void SHADER_DEFAULT::updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, float4x4 ModelViewProj) {
-    // ID3D11DeviceContext* d3d11DeviceContext = *IN_CONTEXT;
-    {
-        D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-        d3d11DeviceContext->Map(SHADER_DEFAULT::constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-        SHADER_DEFAULT::CSBuffer* constants = (SHADER_DEFAULT::CSBuffer*)(mappedSubresource.pData);
-        constants->modelViewProj = ModelViewProj;
-        d3d11DeviceContext->Unmap(SHADER_DEFAULT::constantBuffer, 0);
-    }
+void SHADER_DEFAULT::updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, const float4x4* modelViewProj, const float4x4* worldMat, const float4x4* perspMat, const float4x4* viewMat) {
+	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+	d3d11DeviceContext->Map(SHADER_DEFAULT::constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+	SHADER_DEFAULT::CSBuffer* constants = (SHADER_DEFAULT::CSBuffer*)(mappedSubresource.pData);
+	constants->modelViewProj = *modelViewProj;
+	constants->worldMat = *worldMat;
+	constants->perspMat = *perspMat;
+	constants->viewMat = *viewMat;
+	d3d11DeviceContext->Unmap(SHADER_DEFAULT::constantBuffer, 0);
 }
+
 
 SHADER SHADER_DEFAULT::Load(ID3D11Device* d3d11Device) {
     //ID3D11Device* d3d11Device = INd3dDevice;

@@ -22,6 +22,7 @@ struct Entity {
 struct EntityManager {
 	std::vector<Entity*> registeredEntitys;
 	unsigned int entitySize = 0;
+	ID3D11Buffer* instanceBuffer = nullptr;
 
 	Entity* RegisterEntity(BEngine::Mesh* mMesh, bool isStatic, float3 entityPos = {0.0F, 0.0F, 0.0F});
 
@@ -35,5 +36,6 @@ struct EntityManager {
 
 	void Draw(SHADER* shader, BEngine::MeshManager* meshManager, float4x4* viewMat, float4x4* perspMat);
 	
+	void CheckInstanceBuffer(unsigned int instanceNumber);
 	void Sort();
 } extern entityManager;
