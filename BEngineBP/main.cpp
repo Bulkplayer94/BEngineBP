@@ -83,31 +83,36 @@ void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explo
     scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData);
 }
 
+Entity* water;
+
 void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
-#ifndef _DEBUG
-    const unsigned int lenght = 20;
-#else
-    const unsigned int lenght = 10;
-#endif
-
-    const float startingPosition = -(static_cast<float>(lenght) / 2);
-
-    for (unsigned int i = 0; i != lenght; ++i) {
-        for (unsigned int i2 = 0; i2 != lenght; ++i2) {
-            for (unsigned int i3 = 0; i3 != lenght; ++i3) {
-                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
-                positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
-            }
-        }
-    }
+//#ifndef _DEBUG
+//    const unsigned int lenght = 20;
+//#else
+//    const unsigned int lenght = 10;
+//#endif
+//
+//    const float startingPosition = -(static_cast<float>(lenght) / 2);
+//
+//    for (unsigned int i = 0; i != lenght; ++i) {
+//        for (unsigned int i2 = 0; i2 != lenght; ++i2) {
+//            for (unsigned int i3 = 0; i3 != lenght; ++i3) {
+//                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
+//                positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
+//            }
+//        }
+//    }
 
     Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, -10.0F, 0.0F });
     welt->SetRotation({ 1.5F, 0.0F, 0.0F });
     welt->SetPosition({ -500.0F, -150.0F, -500.0F });
+
+    water = entityManager.RegisterEntity(BEngine::meshManager.meshList["water"], { 0.0F, 20.0F, 0.0F });
+    water->SetRotation({ 1.5F, 0.0F, 0.0F });
 
     isLoading = false;
 
@@ -196,6 +201,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
+
+        if (!isLoading) {
+			for (unsigned int I = 0; I < water->modelMesh[0].models[0].vertexData.size(); I++) {
+				BEngine::VertexData& vtxData = water->modelMesh[0].models[0].vertexData[I];
+				vtxData.pos[2] = sin(I + currentTimeInSeconds);
+			}
+            
+            water->modelMesh[0].models[0].RefillBuffers();
+        }
+        
 
         auto start = std::chrono::high_resolution_clock::now();
         if (!isLoading) {

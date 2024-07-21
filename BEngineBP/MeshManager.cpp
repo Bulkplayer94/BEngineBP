@@ -18,14 +18,18 @@ using JSON = nlohmann::json;
 using namespace BEngine;
 using namespace physx;
 
-struct VertexData
-{
-	float pos[3];
-	float uv[2];
-	float norm[3];
-};
-
 BEngine::MeshManager BEngine::meshManager = {};
+
+void Mesh::RefillBuffers() {
+	if (!this->isDynamic)
+		return;
+
+	D3D11_MAPPED_SUBRESOURCE vertexSubresource;
+	Globals::Direct3D::d3d11DeviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertexSubresource);
+	//vertexSubresource.pData = this->vertexData.data();
+	memcpy(vertexSubresource.pData, this->vertexData.data(), this->vertexData.size() * sizeof(BEngine::VertexData));
+	Globals::Direct3D::d3d11DeviceContext->Unmap(vertexBuffer, 0);
+}
 
 ID3D11ShaderResourceView* LoadTexture(std::string filePath) 
 {
@@ -101,14 +105,18 @@ void MeshManager::StartLoading()
 
 			if (propertyJson.contains("static") && propertyJson["static"].is_boolean())
 				loadedModel->isStatic = propertyJson["static"];
-
 		}
+
+		bool isDynamic = false;
+		if (jsonData.contains("dynamic") && jsonData["dynamic"].is_boolean())
+			isDynamic = jsonData["dynamic"];
 
 		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale);
 
 		for (unsigned int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator)
 		{
 			Mesh newMesh;
+			newMesh.isDynamic = isDynamic;
 
 			const aiMesh* mesh = scene->mMeshes[scene_iterator];
 
@@ -140,6 +148,9 @@ void MeshManager::StartLoading()
 
 				allVertices.push_back({ vertexP.x, vertexP.y, vertexP.z });
 			}
+			
+			if (newMesh.isDynamic)
+				newMesh.vertexData = vertexVec;
 
 			std::vector<unsigned int> indiceVec;
 			for (unsigned int faceIterator = 0; faceIterator < mesh->mNumFaces; ++faceIterator)
@@ -154,7 +165,15 @@ void MeshManager::StartLoading()
 
 			D3D11_BUFFER_DESC vertexBufferDesc = {};
 			vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(VertexData) * vertexVec.size());
-			vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+
+			if (isDynamic)
+			{
+				vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+				vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			}
+			else
+				vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+
 			vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 			D3D11_SUBRESOURCE_DATA vertexResource = { vertexVec.data() };

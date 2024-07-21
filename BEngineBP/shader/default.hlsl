@@ -51,7 +51,7 @@ VS_Output vs_main(VS_Input input)
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
-    float3 lightDirection = {1.0f, 0.0f, 0.0f};
+    float3 lightDirection = {0.0f, -1.0f, 0.0f};
     const float4 diffuseColor = {1.0f, 1.0f, 1.0f, 1.0f};
 
     float4 textureColor;

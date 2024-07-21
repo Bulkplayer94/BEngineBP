@@ -8,6 +8,13 @@
 
 namespace BEngine {
 
+	struct VertexData
+	{
+		float pos[3];
+		float uv[2];
+		float norm[3];
+	};
+
 	struct Texture {
 
 		// RGB "Color" of the Model
@@ -37,6 +44,12 @@ namespace BEngine {
 		Shader* shader = nullptr;
 
 		unsigned int modelID = 0;
+
+		bool isDynamic = false;
+
+		std::vector<VertexData> vertexData;
+
+		void RefillBuffers();
 	};
 
 	struct Model {
