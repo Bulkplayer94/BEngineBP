@@ -24,7 +24,7 @@ namespace BEngine {
 
 	};
 
-	struct Model {
+	struct Mesh {
 
 		Texture modelTexture = {};
 
@@ -37,29 +37,26 @@ namespace BEngine {
 		Shader* shader = nullptr;
 
 		unsigned int modelID = 0;
-
 	};
 
-	struct Mesh {
+	struct Model {
 
-		std::vector<Model> models;
+		std::vector<Mesh> models;
 		std::string modelName;
-
-		// The Physics Model
-		physx::PxShape* physicsModel = nullptr;
 
 		Shader* defaultShader = nullptr;
 
-		void AddModel(Model& mdl) {
+		void AddModel(Mesh& mdl) {
 			models.emplace_back(mdl);
 		}
 
 		unsigned int modelID = 0;
-
+		bool isStatic = false;
+		physx::PxShape* physicsModel = nullptr;
 	};
 
 	struct MeshManager {
-		std::map<std::string, Mesh*> meshList;
+		std::map<std::string, Model*> meshList;
 		unsigned int modelNums = 0;
 
 		void StartLoading();

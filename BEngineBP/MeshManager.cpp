@@ -72,7 +72,7 @@ void MeshManager::StartLoading()
 
 		if (!std::filesystem::exists(pathString + "\\description.json"))
 			continue;
-		
+
 		if (!std::filesystem::exists(dir.path().generic_string() + "\\description.json"))
 			continue;
 
@@ -87,17 +87,28 @@ void MeshManager::StartLoading()
 
 		std::string meshName = pathString.substr(pathString.find_last_of('/') + 1, pathString.size());
 
-		Mesh* loadedMesh = new Mesh;
-		loadedMesh->modelName = meshName;
+		Model* loadedModel = new Model;
+		loadedModel->modelName = meshName;
 		std::vector<float3> allVertices;
+		std::vector<unsigned int> allIndices;
 		Assimp::Importer importer;
-		importer.SetPropertyFloat("scale", 2.0F);
-		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals);
-		
+
+		if (jsonData.contains("propertys") && jsonData["propertys"].is_object()) {
+			JSON propertyJson = jsonData["propertys"];
+
+			if (propertyJson.contains("scale") && propertyJson["scale"].is_number())
+				importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, propertyJson["scale"]);
+
+			if (propertyJson.contains("static") && propertyJson["static"].is_boolean())
+				loadedModel->isStatic = propertyJson["static"];
+
+		}
+
+		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale);
 
 		for (unsigned int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator)
 		{
-			Model newModel;
+			Mesh newMesh;
 
 			const aiMesh* mesh = scene->mMeshes[scene_iterator];
 
@@ -112,9 +123,9 @@ void MeshManager::StartLoading()
 
 				float vertexU = 0.0F, vertexV = 0.0F;
 
-				if (mesh->mTextureCoords[0]) {
-					vertexU = mesh->mTextureCoords[0][vertexIterator].x;
-					vertexV = mesh->mTextureCoords[0][vertexIterator].y;
+				if (mesh->mTextureCoords[scene_iterator]) {
+					vertexU = mesh->mTextureCoords[scene_iterator][vertexIterator].x;
+					vertexV = mesh->mTextureCoords[scene_iterator][vertexIterator].y;
 				}
 				else if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
 					vertexU = mesh->mTangents[vertexIterator].x;
@@ -137,28 +148,29 @@ void MeshManager::StartLoading()
 				for (unsigned int indiceIterator = 0; indiceIterator < face.mNumIndices; ++indiceIterator)
 				{
 					indiceVec.push_back(face.mIndices[indiceIterator]);
+					allIndices.push_back(face.mIndices[indiceIterator]);
 				}
 			}
 
 			D3D11_BUFFER_DESC vertexBufferDesc = {};
-			vertexBufferDesc.ByteWidth = sizeof(VertexData) * vertexVec.size();
+			vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(VertexData) * vertexVec.size());
 			vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 			vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 			D3D11_SUBRESOURCE_DATA vertexResource = { vertexVec.data() };
 
-			HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newModel.vertexBuffer);
+			HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newMesh.vertexBuffer);
 			if (FAILED(hResult))
 				assert("Vertex Buffer Creation Failed");
 
 			D3D11_BUFFER_DESC indiceBufferDesc = {};
-			indiceBufferDesc.ByteWidth = sizeof(unsigned int) * indiceVec.size();
+			indiceBufferDesc.ByteWidth = static_cast<UINT>(sizeof(unsigned int) * indiceVec.size());
 			indiceBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 			indiceBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 			D3D11_SUBRESOURCE_DATA indiceResource = { indiceVec.data() };
 
-			hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newModel.indiceBuffer);
+			hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newMesh.indiceBuffer);
 			if (FAILED(hResult))
 				assert("indices Buffer Creation Failed");
 
@@ -168,41 +180,64 @@ void MeshManager::StartLoading()
 				collisionVertex.push_back({ currElem.pos[0], currElem.pos[1], currElem.pos[2] });
 			}
 
-			newModel.modelTexture.diffuseMap = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["volume"]));
-			newModel.numIndices = indiceVec.size();
+			newMesh.modelTexture.diffuseMap = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["volume"]));
+			newMesh.numIndices = static_cast<UINT>(indiceVec.size());
 
 			modelNums++;
-			newModel.modelID = modelNums;
+			newMesh.modelID = modelNums;
 
-			loadedMesh->AddModel(newModel);
+			loadedModel->AddModel(newMesh);
 		}
 
+		if (!loadedModel->isStatic) {
+			PxConvexMeshDesc convexMeshDesc;
+			convexMeshDesc.points.count = static_cast<PxU32>(allVertices.size());
+			convexMeshDesc.points.data = allVertices.data();
+			convexMeshDesc.points.stride = sizeof(float3);
+			convexMeshDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
 
-		PxConvexMeshDesc convexMeshDesc;
-		convexMeshDesc.points.count = allVertices.size();
-		convexMeshDesc.points.data = allVertices.data();
-		convexMeshDesc.points.stride = sizeof(float3);
-		convexMeshDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
+			PxCookingParams convexMeshParams(Globals::PhysX::mPhysics->getTolerancesScale());
 
-		PxCookingParams convexMeshParams(Globals::PhysX::mPhysics->getTolerancesScale());
+			PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, Globals::PhysX::mPhysics->getPhysicsInsertionCallback());
 
-		PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, Globals::PhysX::mPhysics->getPhysicsInsertionCallback());
+			loadedModel->physicsModel = Globals::PhysX::mPhysics->createShape(PxConvexMeshGeometry(convexMesh), *Globals::PhysX::mMaterial, false);
 
-		// Erstelle eine Form mit dem konvexen Mesh
-		loadedMesh->physicsModel = Globals::PhysX::mPhysics->createShape(PxConvexMeshGeometry(convexMesh), *Globals::PhysX::mMaterial, false);
-
-		convexMesh->release();
-
-		if (jsonData.contains("defaultShader") && shaderManager.shaderList.contains(jsonData["defaultShader"])) {
-			loadedMesh->defaultShader = &shaderManager.shaderList[jsonData["defaultShader"]];
+			convexMesh->release();
 		}
 		else {
-			loadedMesh->defaultShader = &shaderManager.shaderList["default"];
+			PxTriangleMeshDesc triangleMeshDesc;
+
+			triangleMeshDesc.points.count = static_cast<PxU32>(allVertices.size());
+			triangleMeshDesc.points.data = allVertices.data();
+			triangleMeshDesc.points.stride = sizeof(float3);
+			
+			triangleMeshDesc.triangles.count = static_cast<PxU32>(allIndices.size()) / 3;
+			triangleMeshDesc.triangles.data = allIndices.data();
+			triangleMeshDesc.triangles.stride = sizeof(unsigned int) * 3;
+
+			if (!triangleMeshDesc.isValid())
+				assert(false);
+
+			PxCookingParams triangleMeshParams(Globals::PhysX::mPhysics->getTolerancesScale());
+
+			PxTriangleMesh* triangleMesh = PxCreateTriangleMesh(triangleMeshParams, triangleMeshDesc);
+
+			loadedModel->physicsModel = Globals::PhysX::mPhysics->createShape(PxTriangleMeshGeometry(triangleMesh), *Globals::PhysX::mMaterial, false);
+
+			triangleMesh->release();
+		}
+
+
+		if (jsonData.contains("defaultShader") && shaderManager.shaderList.contains(jsonData["defaultShader"])) {
+			loadedModel->defaultShader = &shaderManager.shaderList[jsonData["defaultShader"]];
+		}
+		else {
+			loadedModel->defaultShader = &shaderManager.shaderList["default"];
 		}
 
 		modelNums++;
-		loadedMesh->modelID = modelNums;
+		loadedModel->modelID = modelNums;
 
-		this->meshList[meshName] = loadedMesh;
+		this->meshList[meshName] = loadedModel;
 	}
 }

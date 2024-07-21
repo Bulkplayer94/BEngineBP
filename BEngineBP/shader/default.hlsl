@@ -47,11 +47,13 @@ VS_Output vs_main(VS_Input input)
     return output;
 }
 
-float3 lightDirection = {0.0f, 1.0f, 0.0f};
-float4 diffuseColor = {1.0f, 1.0f, 1.0f, 1.0f};
+
 
 float4 ps_main(VS_Output input) : SV_TARGET
 {
+    float3 lightDirection = {1.0f, 0.0f, 0.0f};
+    const float4 diffuseColor = {1.0f, 1.0f, 1.0f, 1.0f};
+
     float4 textureColor;
 	float3 lightDir;
 	float lightIntensity;
@@ -65,13 +67,15 @@ float4 ps_main(VS_Output input) : SV_TARGET
     lightDir = -lightDirection;
 
     // Calculate the amount of light on this pixel.
-	lightIntensity = max(saturate(dot(input.norm, lightDir)), 0.05F);
+	lightIntensity = saturate(dot(input.norm, lightDir));
 
     // Determine the final amount of diffuse color based on the diffuse color combined with the light intensity.
-    color = saturate(diffuseColor * lightIntensity);
+    color = diffuseColor * lightIntensity;
 
     // Multiply the texture pixel and the final diffuse color to get the final pixel color result.
 	color = color * textureColor;
 
 	return color;
+
+	//return mytexture.Sample(mysampler, input.uv);
 }

@@ -9,7 +9,7 @@
 #include "shader/SHADER_defines.h"
 
 struct Entity {
-	BEngine::Mesh* modelMesh;
+	BEngine::Model* modelMesh;
 	std::string modelName;
 
 	physx::PxRigidActor* physicsActor;
@@ -17,6 +17,9 @@ struct Entity {
 
 	void SetPosition(float3 pos);
 	float3 GetPosition();
+	
+	void SetRotation(float3 rot);
+	float3 GetRotation();
 };
 
 struct EntityManager {
@@ -24,7 +27,7 @@ struct EntityManager {
 	unsigned int entitySize = 0;
 	ID3D11Buffer* instanceBuffer = nullptr;
 
-	Entity* RegisterEntity(BEngine::Mesh* mMesh, bool isStatic, float3 entityPos = {0.0F, 0.0F, 0.0F});
+	Entity* RegisterEntity(BEngine::Model* mMesh, float3 entityPos = {0.0F, 0.0F, 0.0F});
 
 	enum LightType_ {
 		LightType_NONE,

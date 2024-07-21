@@ -8,14 +8,15 @@ EntityManager entityManager = {};
 
 using namespace Globals::PhysX;
 
-Entity* EntityManager::RegisterEntity(BEngine::Mesh* mMesh, bool isStatic, float3 entityPos)
+Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, float3 entityPos)
 {
 	Entity* newEnt = new Entity();
-	newEnt->isStatic = isStatic;
+	newEnt->isStatic = mMesh->isStatic;
 	newEnt->modelName = mMesh->modelName;
 	newEnt->modelMesh = mMesh;
 
-	if (!isStatic) {
+
+	if (!newEnt->isStatic) {
 		newEnt->physicsActor = physx::PxCreateDynamic(*mPhysics, PxTransform(PxIdentity), *mMesh->physicsModel, 10.0F);
 	}
 	else {
@@ -55,7 +56,7 @@ UINT modelOffset = 0;
 
 static std::string currentShader = "";
 
-bool compareMeshFunc(const std::pair<BEngine::Model*, float4x4>& pair1, const std::pair<const BEngine::Model*, float4x4>& pair2) {
+bool compareMeshFunc(const std::pair<BEngine::Mesh*, float4x4>& pair1, const std::pair<const BEngine::Mesh*, float4x4>& pair2) {
 	return (pair1.first->modelID < pair2.first->modelID);
 }
 
@@ -66,11 +67,12 @@ void EntityManager::Draw(SHADER* shader, BEngine::MeshManager* meshManager, floa
 
 	float4x4 modelMatrix[100];
 
-	std::vector<float4x4> floatVec = {};
+	//std::vector<float4x4> floatVec = {};
+	//floatVec.reserve(100);
 
-	memcpy(modelMatrix, floatVec.data() + 100, 100);
+	//memcpy(modelMatrix, floatVec.data() + 100, 100);
 
-	std::vector<std::pair<Model*, float4x4>> modelVector;
+	std::vector<std::pair<Mesh*, float4x4>> modelVector;
 	modelVector.reserve(registeredEntitys.size());
 
 	for (auto& I : registeredEntitys)
@@ -140,5 +142,48 @@ float3 Entity::GetPosition()
 {
 	PxTransform trans = physicsActor->getGlobalPose();
 	return { trans.p.x, trans.p.y, trans.p.z };
+}
+
+void Entity::SetRotation(float3 rot)
+{
+	float cr = std::cos(rot.x * 0.5F);
+	float sr = std::sin(rot.x * 0.5F);
+	float cp = std::cos(rot.y * 0.5F);
+	float sp = std::sin(rot.y * 0.5F);
+	float cy = std::cos(rot.z * 0.5F);
+	float sy = std::sin(rot.z * 0.5F);
+
+	PxQuat quat;
+	quat.w = cr * cp * cy + sr * sp * sy;
+	quat.x = sr * cp * cy - cr * sp * sy;
+	quat.y = cr * sp * cy + sr * cp * sy;
+	quat.z = cr * cp * sy - sr * sp * cy;
+
+	PxTransform trans = this->physicsActor->getGlobalPose();
+	trans.q = quat;
+	this->physicsActor->setGlobalPose(trans);
+}
+
+float3 Entity::GetRotation()
+{
+	PxQuat quat = this->physicsActor->getGlobalPose().q;
+	float3 rotation;
+
+	// roll (x-axis rotation)
+	double sinr_cosp = 2 * (quat.w * quat.x + quat.y * quat.z);
+	double cosr_cosp = 1 - 2 * (quat.x * quat.x + quat.y * quat.y);
+	rotation.x = std::atan2(sinr_cosp, cosr_cosp);
+
+	// pitch (y-axis rotation)
+	double sinp = std::sqrt(1 + 2 * (quat.w * quat.y - quat.x * quat.z));
+	double cosp = std::sqrt(1 - 2 * (quat.w * quat.y - quat.x * quat.z));
+	rotation.y = 2 * std::atan2(sinp, cosp) - M_PI / 2;
+
+	// yaw (z-axis rotation)
+	double siny_cosp = 2 * (quat.w * quat.z + quat.x * quat.y);
+	double cosy_cosp = 1 - 2 * (quat.y * quat.y + quat.z * quat.z);
+	rotation.z = std::atan2(siny_cosp, cosy_cosp);
+
+	return rotation;
 }
 

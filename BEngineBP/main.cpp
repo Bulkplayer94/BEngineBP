@@ -53,8 +53,6 @@ public:
            
             PxTransform actorPos = hit.actor->getGlobalPose();
 
-            std::cout << std::format("Hit Actor at {}, {}, {}", actorPos.p.x, actorPos.p.y, actorPos.p.z) << std::endl;
-
             PxRigidDynamic* act = (PxRigidDynamic*)hit.actor;
 
             PxVec3 force = actorPos.p - explosionCenter;
@@ -82,29 +80,8 @@ void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explo
     PxQueryFilterData filterData;
     filterData.flags = PxQueryFlag::eDYNAMIC;
 
-    if (scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData)) {
-        std::cout << "Sweep found " << sweepCallback.nbTouches << " hits." << std::endl;
-
-        //for (PxU32 i = 0; i < sweepCallback.nbTouches; ++i) {
-        //    PxRigidDynamic* dynamicActor = sweepCallback.touches[i].actor->is<PxRigidDynamic>();
-        //    if (dynamicActor) {
-        //        PxVec3 actorPos = dynamicActor->getGlobalPose().p;
-        //        PxVec3 forceDirection = actorPos - explosionCenter;
-        //        float distance = forceDirection.normalize();
-
-        //        if (distance < explosionRadius) {
-        //            float forceMagnitude = explosionStrength * (1.0f - (distance / explosionRadius));
-        //            PxVec3 force = forceDirection * forceMagnitude;
-        //            dynamicActor->addForce(force, PxForceMode::eIMPULSE);
-        //        }
-        //    }
-        //}
-    }
-    else {
-        std::cout << "No hits found." << std::endl;
-    }
+    scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData);
 }
-
 
 void LoadRessources() {
 
@@ -112,9 +89,9 @@ void LoadRessources() {
     BEngine::meshManager.StartLoading();
 
 #ifndef _DEBUG
-    const unsigned int lenght = 40;
+    const unsigned int lenght = 20;
 #else
-    const unsigned int lenght = 5;
+    const unsigned int lenght = 10;
 #endif
 
     const float startingPosition = -(static_cast<float>(lenght) / 2);
@@ -122,18 +99,15 @@ void LoadRessources() {
     for (unsigned int i = 0; i != lenght; ++i) {
         for (unsigned int i2 = 0; i2 != lenght; ++i2) {
             for (unsigned int i3 = 0; i3 != lenght; ++i3) {
-                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
+                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
                 positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
             }
         }
     }
 
-    //Entity* spawnedWareHouse = entityManager.RegisterEntity(BEngine::meshManager.meshList["warehouse"], true);
-
-    //entityManager.RegisterEntity(BEngine::meshManager.meshList["base_plattform"], true, { 0.0F, -10.0F, 0.0F });
-    //entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false);
-
-    //entityManager.RegisterEntity(BEngine::meshManager.meshList["galil"], false, { 0.0F, 0.0F, 0.0F });
+    Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, -10.0F, 0.0F });
+    welt->SetRotation({ 1.5F, 0.0F, 0.0F });
+    welt->SetPosition({ -500.0F, -150.0F, -500.0F });
 
     isLoading = false;
 
@@ -264,7 +238,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_P)) {
-                Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], false);
+                Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
                 PxTransform trans = entity->physicsActor->getGlobalPose();
 
                 trans.p.x = cameraPos.x;
@@ -278,9 +252,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], false, { cameraPos.x, cameraPos.y, cameraPos.z });
-                
-
+                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { cameraPos.x, cameraPos.y, cameraPos.z });
             }
 
             Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
@@ -332,17 +304,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         {
             RECT clientRect;
             GetClientRect(hWnd, &clientRect);
-            windowWidth = clientRect.right - clientRect.left;
-            windowHeight = clientRect.bottom - clientRect.top;
-            windowAspectRatio = (float)windowWidth / (float)windowHeight;
+            windowWidth = static_cast<float>(clientRect.right - clientRect.left);
+            windowHeight = static_cast<float>(clientRect.bottom - clientRect.top);
+            windowAspectRatio = windowWidth / windowHeight;
 
             if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] && GetActiveWindow() == hWnd && GetFocus() == hWnd) {
                 RECT hwndInfo;
                 GetWindowRect(hWnd, &hwndInfo);
-                int HWNDwindowWidth = hwndInfo.left;
-                int HWNDwindowHeight = hwndInfo.top;
+                int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
+                int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
                 
-                SetCursorPos(HWNDwindowWidth + (windowWidth / 2), HWNDwindowHeight + (windowHeight / 2));
+                SetCursorPos(HWNDwindowWidth + static_cast<int>(windowWidth / 2), HWNDwindowHeight + static_cast<int>(windowHeight / 2));
                 //std::cout << HWNDwindowWidth << " : " << HWNDwindowHeight << std::endl;
             }
         }

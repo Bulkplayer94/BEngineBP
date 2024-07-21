@@ -44,7 +44,7 @@ namespace PhysXManager {
         bool recordMemoryAllocation = true;
 
         mPvd = PxCreatePvd(*mFoundation);
-        mTransport = PxDefaultPvdFileTransportCreate("E:\\GitProjects\\BEngine\\PxSaved.pvd");
+        mTransport = PxDefaultPvdFileTransportCreate("C:\\Users\\goris\\Desktop\\C++\\BEngineBP\\BEngineBP\\PxSaved.pvd");
         mPvd->connect(*mTransport, PxPvdInstrumentationFlag::eALL);
 
         mPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *mFoundation, PxTolerancesScale(), recordMemoryAllocation, mPvd);
@@ -78,7 +78,7 @@ namespace PhysXManager {
 
         PxRigidStatic* groundPlane = PxCreatePlane(*mPhysics, PxPlane(0, 1, 0, 0), *mMaterial);
         PxTransform transform = groundPlane->getGlobalPose();
-        transform.p.y = -100.0f;
+        transform.p.y = -200.0f;
         groundPlane->setGlobalPose(transform);
         mScene->addActor(*groundPlane);
 
