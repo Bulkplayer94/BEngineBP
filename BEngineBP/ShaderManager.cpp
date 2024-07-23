@@ -14,8 +14,29 @@ namespace ConstantBuffers {
 		double currTime;
 	};
 
-	struct ModelViewCBuffer {
-		float4x4 modelViewMatrix;
+	struct MatrixCBuffer {
+		float4x4 worldMat;
+		float4x4 perspMat;
+		float4x4 viewMat;
+	};
+
+	namespace Lights {
+		struct DirectionalLight {
+			float3 lightDirection;
+			float4 diffuseColor;
+			float padding;
+		};
+
+		struct PointLight {
+			float3 position;
+			float4 diffuseColor;
+			float padding;
+		};
+	}
+
+	struct LightCBuffer {
+		Lights::DirectionalLight directionalLight;
+		Lights::PointLight pointLights[LIGHTS_COUNT];
 	};
 }
                                   
@@ -24,7 +45,7 @@ void ShaderManager::StartLoading()
 {
 	{
 		D3D11_BUFFER_DESC constantBufferDesc = {};
-		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::ModelViewCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::MatrixCBuffer) + 0xf & 0xfffffff0;
 		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -33,8 +54,8 @@ void ShaderManager::StartLoading()
 		if (FAILED(hResult))
 			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creatíon of ModelViewProj Buffer failed!");
 
-		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(0, 0, &animationBuffer);
-		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(0, 0, &animationBuffer);
+		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(0, 1, &modelViewBuffer);
+		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(0, 1, &modelViewBuffer);
 	}
 
 	{
@@ -49,8 +70,24 @@ void ShaderManager::StartLoading()
 		if (FAILED(hResult))
 			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Animation Buffer Failed!");
 
-		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(1, 0, &animationBuffer);
-		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(1, 0, &animationBuffer);
+		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(1, 1, &animationBuffer);
+		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(1, 1, &animationBuffer);
+	}
+
+	{
+		D3D11_BUFFER_DESC constantBufferDesc = {};
+		// ByteWidth must be a multiple of 16, per the docs
+		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::LightCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &lightsBuffer);
+		if (FAILED(hResult))
+			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Light Buffer Failed!");
+
+		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(2, 1, &lightsBuffer);
+		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
 
 	std::filesystem::directory_iterator dirIterator("data\\shader");
@@ -69,10 +106,12 @@ void ShaderManager::StartLoading()
 
 		std::wstring wPath(pathString.begin(), pathString.end());
 
-		if (!shaderList.contains(fileName))
-			shaderList[fileName] = {};
+		if (!shaderList.contains(shaderName)) {
+			shaderList[shaderName] = {};
+			shaderList[shaderName].shaderName = shaderName;
+		}
 
-		Shader* compiledShader = &shaderList[fileName];
+		Shader* compiledShader = &shaderList[shaderName];
 
 		if (strcmp(shortFront.c_str(), "vs_") == 0) {
 			ID3D11Device* d3d11Device = Globals::Direct3D::d3d11Device;
@@ -130,12 +169,16 @@ void ShaderManager::StartLoading()
 				errorReporter.Report(ErrorReporter::ErrorLevel_MEDIUM, "Shader Compiler Error");
 				continue;
 			}
+
 		}
 	}
 }
 
 void ShaderManager::Proc() {
 	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
+
+	ctx->VSSetConstantBuffers(0, 1, &modelViewBuffer);
+	ctx->PSSetConstantBuffers(0, 1, &modelViewBuffer);
 
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
@@ -144,26 +187,43 @@ void ShaderManager::Proc() {
 		buffer->deltaTime = Globals::Animation::deltaTime;
 		buffer->currTime = (double)Globals::Animation::currTime;
 		ctx->Unmap(animationBuffer, 0);
+
+		ctx->VSSetConstantBuffers(1, 1, &animationBuffer);
+		ctx->PSSetConstantBuffers(1, 1, &animationBuffer);
+	}
+
+	{
+		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+		ctx->Map(lightsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+		ConstantBuffers::LightCBuffer* buffer = (ConstantBuffers::LightCBuffer*)mappedSubresource.pData;
+		buffer->directionalLight.diffuseColor = { 1.F, 1.F, 1.F, 1.F };
+		buffer->directionalLight.lightDirection = { 0.0f, 0.0f, 1.0f };
+		ctx->Unmap(lightsBuffer, 0);
+
+		ctx->VSSetConstantBuffers(2, 1, &lightsBuffer);
+		ctx->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
 }
 
 static std::string currentShader = "";
 
-void Shader::SetContext(const float4x4& modelViewProj)
+void Shader::SetContext(const float4x4& worldMat, const float4x4& perspectiveMat, const float4x4& viewMat)
 {
 	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
 
-	if (strcmp(currentShader.c_str(), shaderName.c_str()) == 0) {
+	if (strcmp(currentShader.c_str(), shaderName.c_str()) != 0) {
 		ctx->IASetInputLayout(inputLayout);
-		ctx->VSSetShader(vertexShader, NULL, 1);
-		ctx->PSSetShader(pixelShader, NULL, 1);
+		ctx->VSSetShader(vertexShader, NULL, 0);
+		ctx->PSSetShader(pixelShader, NULL, 0);
 		
 		currentShader = shaderName;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 	ctx->Map(shaderManager.modelViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-	ConstantBuffers::ModelViewCBuffer* buffer = (ConstantBuffers::ModelViewCBuffer*)mappedSubresource.pData;
-	buffer->modelViewMatrix = modelViewProj;
+	ConstantBuffers::MatrixCBuffer* buffer = (ConstantBuffers::MatrixCBuffer*)mappedSubresource.pData;
+	buffer->worldMat = worldMat;
+	buffer->perspMat = perspectiveMat;
+	buffer->viewMat = viewMat;
 	ctx->Unmap(shaderManager.modelViewBuffer, 0);
 }

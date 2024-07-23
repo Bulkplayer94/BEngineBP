@@ -3,9 +3,9 @@
 VertexOutput main(VertexInput input)
 {
     VertexOutput output;
-    float4 worldPos = mul(float4(input.pos, 1.0f), worldMatrix);
-    float4 viewPos = mul(worldPos, viewMatrix);
-    output.pos = mul(viewPos, perspectiveMatrix);
+    output.pos = mul(float4(input.pos, 1.0F), worldMatrix);
+    output.pos = mul(output.pos, viewMatrix);
+    output.pos = mul(output.pos, perspectiveMatrix);
     
     output.uv = input.uv;
     

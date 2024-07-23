@@ -8,14 +8,14 @@
 
 namespace BEngine {
 	struct Shader {
-		ID3D11VertexShader* vertexShader;
-		ID3D11PixelShader* pixelShader;
+		ID3D11VertexShader* vertexShader = nullptr;
+		ID3D11PixelShader* pixelShader = nullptr;
 
-		ID3D11InputLayout* inputLayout;
+		ID3D11InputLayout* inputLayout = nullptr;
 
-		std::string shaderName;
+		std::string shaderName = "";
 
-		void SetContext(const float4x4& modelViewProj);
+		void SetContext(const float4x4& modelMat, const float4x4& perspectiveMat, const float4x4& viewMat);
 	};
 
 	struct ShaderManager {
@@ -23,8 +23,9 @@ namespace BEngine {
 		void StartLoading();
 		void Proc();
 
-		ID3D11Buffer* modelViewBuffer;
-		ID3D11Buffer* animationBuffer;
+		ID3D11Buffer* modelViewBuffer = nullptr;
+		ID3D11Buffer* animationBuffer = nullptr;
+		ID3D11Buffer* lightsBuffer = nullptr;
 
 		std::map<std::string, Shader> shaderList;
 

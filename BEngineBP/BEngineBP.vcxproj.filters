@@ -30,9 +30,6 @@
     <ClCompile Include="PhysXManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="shader\SHADER_default.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="ImGui\imgui.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -135,6 +132,15 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="GuiLib.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="CCamera.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="LightManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="shader\SHADER_water.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ShaderManager.h">

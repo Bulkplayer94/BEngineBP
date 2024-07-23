@@ -118,6 +118,7 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
 		initialHeight,
 		0, 0, hInstance, 0);
 
+
 	if (!hWnd) {
 		MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
 		return GetLastError();

@@ -160,9 +160,9 @@
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="PhysXManager.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
-    <ClCompile Include="shader\SHADER_default.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CCamera.h" />
     <ClInclude Include="GuiLib.h" />
     <ClInclude Include="3DMaths.h" />
     <ClInclude Include="EntityManager.h" />
@@ -179,12 +179,14 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="IMOverlayManager.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="LightManager.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="shader\SHADER_default.h" />
     <ClInclude Include="shader\SHADER_defines.h" />
+    <ClInclude Include="shader\SHADER_water.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\hook.lua" />

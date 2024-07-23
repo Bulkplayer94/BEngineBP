@@ -17,7 +17,10 @@ namespace BEngine {
 
             const float4& screenPoint = homogeneousPoint * transformationMat;
 
-            const float& invW = 1.0f / screenPoint.w;
+            const float invW = 1.0f / screenPoint.w;
+            if (invW < 0.001F) {
+                return { -1.0F, -1.0F };
+            }
             float2 screenPosition = { screenPoint.x * invW, screenPoint.y * invW };
 
             screenPosition.x = (screenPosition.x + 1.0f) * 0.5f * screenWidth;

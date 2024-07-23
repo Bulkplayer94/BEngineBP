@@ -107,6 +107,16 @@ void MeshManager::StartLoading()
 				loadedModel->isStatic = propertyJson["static"];
 		}
 
+		Shader* shader = &shaderManager.shaderList["default"];
+		if (jsonData.contains("shaderProperties") && jsonData["shaderProperties"].is_object())
+		{
+			JSON propertyJson = jsonData["shaderProperties"];
+			
+			if (propertyJson.contains("shaderName") && propertyJson["shaderName"].is_string())
+				shader = &shaderManager.shaderList[propertyJson["shaderName"]];
+
+		}
+
 		bool isDynamic = false;
 		if (jsonData.contains("dynamic") && jsonData["dynamic"].is_boolean())
 			isDynamic = jsonData["dynamic"];
@@ -204,6 +214,8 @@ void MeshManager::StartLoading()
 
 			modelNums++;
 			newMesh.modelID = modelNums;
+
+			newMesh.shader = shader;
 
 			loadedModel->AddModel(newMesh);
 		}

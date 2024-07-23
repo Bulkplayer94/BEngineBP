@@ -77,7 +77,7 @@ void EntityManager::Draw(SHADER* shader, BEngine::MeshManager* meshManager, floa
 
 	for (auto& I : registeredEntitys)
 	{
-		const float4x4 modelMatrix = PxTransformToFloat4x4Alt(I->physicsActor->getGlobalPose());
+		const float4x4& modelMatrix = PxTransformToFloat4x4Alt(I->physicsActor->getGlobalPose());
 		for (auto& I2 : I->modelMesh->models)
 		{
 			modelVector.emplace_back( &I2, modelMatrix );
@@ -89,18 +89,20 @@ void EntityManager::Draw(SHADER* shader, BEngine::MeshManager* meshManager, floa
 
 	const float4x4 modelViewProj = createIdentityMatrix();
 
+	std::string currShader = "";
 	unsigned int lastModelID = 0;
 	for (auto& model : modelVector)
 	{
 		if (lastModelID != model.first->modelID) {
-			shader->sContextFunc(d3d11DeviceContext, &currentShader);
+			//shader->sContextFunc(d3d11DeviceContext, &currShader);
 			d3d11DeviceContext->PSSetShaderResources(0, 1, &model.first->modelTexture.diffuseMap);
 			d3d11DeviceContext->IASetVertexBuffers(0, 1, &model.first->vertexBuffer, &modelStride, &modelOffset);
 			d3d11DeviceContext->IASetIndexBuffer(model.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
 			d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
 			d3d11DeviceContext->VSSetSamplers(0, 1, &samplerState);
+			//shader->sBufferFunc(d3d11DeviceContext, &modelViewProj, &model.second, perspMat, viewMat);
 		}
-		shader->sBufferFunc(d3d11DeviceContext, &modelViewProj, &model.second, perspMat, viewMat);
+		model.first->shader->SetContext(model.second, *perspMat, *viewMat);
 		d3d11DeviceContext->DrawIndexed(model.first->numIndices, 0, 0);
 	}
 

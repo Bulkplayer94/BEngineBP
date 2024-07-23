@@ -8,6 +8,18 @@
 #include "3DMaths.h"
 #include "shader/SHADER_defines.h"
 
+enum EntityType {
+	EntityType_NONE,
+	EntityType_LIGHT,
+	EntityType_OPAQUE,
+	EntityType_DEFAULT,
+	EntityType_NOLIGHT,
+};
+
+struct BaseEntity {
+	EntityType entType = EntityType_NONE;
+};
+
 struct Entity {
 	BEngine::Model* modelMesh;
 	std::string modelName;
@@ -28,14 +40,6 @@ struct EntityManager {
 	ID3D11Buffer* instanceBuffer = nullptr;
 
 	Entity* RegisterEntity(BEngine::Model* mMesh, float3 entityPos = {0.0F, 0.0F, 0.0F});
-
-	enum LightType_ {
-		LightType_NONE,
-		LightType_BEAM,
-		LightType_POINT,
-		LightType_DIRECTIONAL
-	};
-	//unsigned int RegisterLight(float3 lightPos, float3 lightAngle, float3 lightColor, float lightStrenght);
 
 	void Draw(SHADER* shader, BEngine::MeshManager* meshManager, float4x4* viewMat, float4x4* perspMat);
 	

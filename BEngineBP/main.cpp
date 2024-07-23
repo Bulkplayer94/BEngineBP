@@ -31,6 +31,7 @@
 #include "ShaderManager.h"
 
 #include "ErrorReporter.h"
+#include "CCamera.h"
 
 #include <chrono>
 #include <thread>
@@ -83,36 +84,14 @@ void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explo
     scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData);
 }
 
-Entity* water;
-
 void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
-//#ifndef _DEBUG
-//    const unsigned int lenght = 20;
-//#else
-//    const unsigned int lenght = 10;
-//#endif
-//
-//    const float startingPosition = -(static_cast<float>(lenght) / 2);
-//
-//    for (unsigned int i = 0; i != lenght; ++i) {
-//        for (unsigned int i2 = 0; i2 != lenght; ++i2) {
-//            for (unsigned int i3 = 0; i3 != lenght; ++i3) {
-//                Entity* positionedEnt = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
-//                positionedEnt->SetPosition({ startingPosition + (i * 5.0F), 0.0F + (i3 * 5.0F), startingPosition + (i2 * 5.0F)});
-//            }
-//        }
-//    }
-
     Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, -10.0F, 0.0F });
     welt->SetRotation({ 1.5F, 0.0F, 0.0F });
     welt->SetPosition({ -500.0F, -150.0F, -500.0F });
-
-    water = entityManager.RegisterEntity(BEngine::meshManager.meshList["water"], { 0.0F, 20.0F, 0.0F });
-    water->SetRotation({ 1.5F, 0.0F, 0.0F });
 
     isLoading = false;
 
@@ -140,13 +119,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     //BEngine::LoadAdvancedShaders(d3d11Device);
 
     SHADER DefaultShades = SHADER_DEFAULT::Load(Globals::Direct3D::d3d11Device);
-
-    // Camera
-    float3 cameraPos = { 0.0F, 0.0F, 0.0F };
-    float3 cameraFwd = { -0.02F, -0.076F, -1.0F };
-    float cameraPitch = 0.f;
-    float cameraYaw = 0.f;
-    unsigned int cameraWpn = 0;
 
     float4x4 perspectiveMat = {};
     Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true; // To force initial perspectiveMat calculation
@@ -192,7 +164,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             Globals::Animation::deltaTime = dt;
             Globals::Animation::currTime = currentTimeInSeconds;
         }
-
+        
         MSG msg = {};
         while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
         {
@@ -201,16 +173,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
-
-        if (!isLoading) {
-			for (unsigned int I = 0; I < water->modelMesh[0].models[0].vertexData.size(); I++) {
-				BEngine::VertexData& vtxData = water->modelMesh[0].models[0].vertexData[I];
-				vtxData.pos[2] = sin(I + currentTimeInSeconds);
-			}
-            
-            water->modelMesh[0].models[0].RefillBuffers();
-        }
-        
 
         auto start = std::chrono::high_resolution_clock::now();
         if (!isLoading) {
@@ -221,8 +183,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         float3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
-            PxVec3 origin = { cameraPos.x, cameraPos.y, cameraPos.z };
-            PxVec3 unitDir = { cameraFwd.x, cameraFwd.y, cameraFwd.z };
+            using namespace BEngine;
+
+            PxVec3 origin = { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z };
+            PxVec3 unitDir = { playerCamera.forward.x, playerCamera.forward.y, playerCamera.forward.z };
             PxReal maxDistance = 500.0F;
             PxRaycastBuffer hit;
 
@@ -256,9 +220,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
                 PxTransform trans = entity->physicsActor->getGlobalPose();
 
-                trans.p.x = cameraPos.x;
-                trans.p.y = cameraPos.y;
-                trans.p.z = cameraPos.z;
+                trans.p.x = playerCamera.position.x;
+                trans.p.y = playerCamera.position.y;
+                trans.p.z = playerCamera.position.z;
 
                 entity->physicsActor->setGlobalPose(trans);
 
@@ -267,7 +231,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { cameraPos.x, cameraPos.y, cameraPos.z });
+                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z });
             }
 
             Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
@@ -276,7 +240,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         imOverlayManager.Proc();
 
         static bool mouseWasReleased = true;
-        ImVec2 realMouseDrag = { 0,0 };
+        float2 realMouseDrag = { 0,0 };
         {
             POINT mousePoint;
             if (GetCursorPos(&mousePoint)) {
@@ -328,10 +292,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 GetWindowRect(hWnd, &hwndInfo);
                 int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
                 int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
-                
+
                 SetCursorPos(HWNDwindowWidth + static_cast<int>(windowWidth / 2), HWNDwindowHeight + static_cast<int>(windowHeight / 2));
-                //std::cout << HWNDwindowWidth << " : " << HWNDwindowHeight << std::endl;
             }
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+            Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
+            mouseWasReleased = true;
         }
 
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
@@ -351,57 +319,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         static float mouseSensitivity = 20.0F;
 
-        // Update camera
-        if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED])
-        {
-            float3 camFwdXZ = normalise(float3{ cameraFwd.x, 0, cameraFwd.z });
-            float3 cameraRightXZ = cross(camFwdXZ, { 0, 1, 0 });
-
-            float CAM_MOVE_SPEED = 5.f; // in metres per second
-            if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
-                CAM_MOVE_SPEED *= 4;
-
-            const float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * dt;
-            if (ImGui::IsKeyDown(ImGuiKey_W))
-                cameraPos += camFwdXZ * CAM_MOVE_AMOUNT;
-            if (ImGui::IsKeyDown(ImGuiKey_S))
-                cameraPos -= camFwdXZ * CAM_MOVE_AMOUNT;
-            if (ImGui::IsKeyDown(ImGuiKey_A))
-                cameraPos -= cameraRightXZ * CAM_MOVE_AMOUNT;
-            if (ImGui::IsKeyDown(ImGuiKey_D))
-                cameraPos += cameraRightXZ * CAM_MOVE_AMOUNT;
-            if (ImGui::IsKeyDown(ImGuiKey_E))
-                cameraPos.y += CAM_MOVE_AMOUNT;
-            if (ImGui::IsKeyDown(ImGuiKey_Q))
-                cameraPos.y -= CAM_MOVE_AMOUNT;
-
-            if (mouseWasReleased == false) {
-                mouseWasReleased = true;
-            } else {
-                cameraYaw += realMouseDrag.x * (mouseSensitivity / 10000);
-                cameraPitch += realMouseDrag.y * (mouseSensitivity / 10000);
-            }
-
-            // Wrap yaw to avoid floating-point errors if we turn too far
-            while (cameraYaw >= 2.0F * (float)M_PI)
-                cameraYaw -= 2.0F * (float)M_PI;
-            while (cameraYaw <= -2.0F * (float)M_PI)
-                cameraYaw += 2.0F * (float)M_PI;
-
-            // Clamp pitch to stop camera flipping upside down
-            if (cameraPitch > degreesToRadians(85))
-                cameraPitch = degreesToRadians(85);
-            if (cameraPitch < -degreesToRadians(85))
-                cameraPitch = -degreesToRadians(85);
-        }
-
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
-            Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
-            mouseWasReleased = true;
-        }
-
-        float4x4 viewMat = translationMat(-cameraPos) * rotateYMat(-cameraYaw) * rotateXMat(-cameraPitch);
-        cameraFwd = { -viewMat.m[2][0], -viewMat.m[2][1], -viewMat.m[2][2] };
+        BEngine::playerCamera.HandleInput(mouseSensitivity, realMouseDrag);
+        BEngine::playerCamera.Frame();
 
         FLOAT backgroundColor[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
         d3d11DeviceContext->ClearRenderTargetView(d3d11FrameBufferView, backgroundColor);
@@ -420,7 +339,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         d3d11DeviceContext->PSSetSamplers(1, 1, &samplerState);
 
         if (!isLoading) {
-            entityManager.Draw(&DefaultShades, &BEngine::meshManager, &viewMat, &perspectiveMat);
+            BEngine::shaderManager.Proc();
+            entityManager.Draw(&DefaultShades, &BEngine::meshManager, &BEngine::playerCamera.viewMat, &perspectiveMat);
         }
 
         if (isLoading)
@@ -465,10 +385,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
 
                 ImGui::Text("FPS: %.2f", smoothFPS);
-                ImGui::Text("Pos: %.2f, %.2f, %.2f", cameraPos.x, cameraPos.y, cameraPos.z);
-                ImGui::Text("Fwd: %.2f, %.2f, %.2f", cameraFwd.x, cameraFwd.y, cameraFwd.z);
-                ImGui::Text("Pit: %.2f", cameraPitch);
-                ImGui::Text("Yaw: %.2f", cameraYaw);
+                ImGui::Text("Pos: %.2f, %.2f, %.2f", BEngine::playerCamera.position.x, BEngine::playerCamera.position.y, BEngine::playerCamera.position.z);
+                ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
+                ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::playerCamera.rotation.x, BEngine::playerCamera.rotation.y, BEngine::playerCamera.rotation.z);
 
                 ImGui::SliderFloat("Maus Empfindlichkeit", &mouseSensitivity, 0, 100);
 
@@ -481,11 +400,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
 
                 ImDrawList* bgList = ImGui::GetBackgroundDrawList();
-                float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, viewMat, perspectiveMat, windowWidth, windowHeight);
+                float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
                 bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
 
                 PxExtendedVec3 playerPos = Globals::PhysX::mPlayerController->getPosition();
-                float2 playerProjection = BEngine::GuiLib::project3Dto2D({ (float)playerPos.x, (float)playerPos.y, (float)playerPos.z }, viewMat, perspectiveMat, windowWidth, windowHeight);
+                float2 playerProjection = BEngine::GuiLib::project3Dto2D({ (float)playerPos.x, (float)playerPos.y, (float)playerPos.z }, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
                 bgList->AddCircle({ playerProjection.x, playerProjection.y }, 2.0F, ImColor(0, 255, 0, 100));
 
             }

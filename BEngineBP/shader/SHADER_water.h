@@ -5,13 +5,13 @@
 #include <assert.h>
 #include <d3dcompiler.h>
 
-namespace SHADER_DEFAULT {
+namespace SHADER_WATER {
 
     static ID3D11VertexShader* VSShader;
     static ID3D11PixelShader* PSShader;
     static ID3D11Buffer* constantBuffer;
     static ID3D11InputLayout* inputLayout;
-    
+
     struct CSBuffer {
         float4x4 modelViewProj;
         float4x4 worldMat;
@@ -24,11 +24,11 @@ namespace SHADER_DEFAULT {
     inline SHADER Load(ID3D11Device* d3d11Device);
 }
 
-void SHADER_DEFAULT::setContext(ID3D11DeviceContext* d3d11DeviceContext, std::string* currentShader) {
-    using namespace SHADER_DEFAULT;
+void SHADER_WATER::setContext(ID3D11DeviceContext* d3d11DeviceContext, std::string* currentShader) {
+    using namespace SHADER_WATER;
 
-    if (*currentShader != "DEFAULT") {
-        *currentShader = "DEFAULT";
+    if (*currentShader != "WATER") {
+        *currentShader = "WATER";
 
         d3d11DeviceContext->IASetInputLayout(inputLayout);
         d3d11DeviceContext->VSSetShader(VSShader, nullptr, 0);
@@ -40,19 +40,19 @@ void SHADER_DEFAULT::setContext(ID3D11DeviceContext* d3d11DeviceContext, std::st
 
 }
 
-void SHADER_DEFAULT::updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, const float4x4* modelViewProj, const float4x4* worldMat, const float4x4* perspMat, const float4x4* viewMat) {
-	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-	d3d11DeviceContext->Map(SHADER_DEFAULT::constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
-	SHADER_DEFAULT::CSBuffer* constants = (SHADER_DEFAULT::CSBuffer*)(mappedSubresource.pData);
-	constants->modelViewProj = *modelViewProj;
-	constants->worldMat = *worldMat;
-	constants->perspMat = *perspMat;
-	constants->viewMat = *viewMat;
-	d3d11DeviceContext->Unmap(SHADER_DEFAULT::constantBuffer, 0);
+void SHADER_WATER::updateBuffer(ID3D11DeviceContext* d3d11DeviceContext, const float4x4* modelViewProj, const float4x4* worldMat, const float4x4* perspMat, const float4x4* viewMat) {
+    D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+    d3d11DeviceContext->Map(SHADER_WATER::constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+    SHADER_WATER::CSBuffer* constants = (SHADER_WATER::CSBuffer*)(mappedSubresource.pData);
+    constants->modelViewProj = *modelViewProj;
+    constants->worldMat = *worldMat;
+    constants->perspMat = *perspMat;
+    constants->viewMat = *viewMat;
+    d3d11DeviceContext->Unmap(SHADER_WATER::constantBuffer, 0);
 }
 
 
-SHADER SHADER_DEFAULT::Load(ID3D11Device* d3d11Device) {
+SHADER SHADER_WATER::Load(ID3D11Device* d3d11Device) {
     //ID3D11Device* d3d11Device = INd3dDevice;
 
     SHADER SDefault;
