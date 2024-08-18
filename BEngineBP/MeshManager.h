@@ -13,12 +13,14 @@ namespace BEngine {
 		float pos[3];
 		float uv[2];
 		float norm[3];
+		float boneids[4];
+		float boneWeights[4];
 	};
 
 	struct Texture {
 
 		// RGB "Color" of the Model
-		ID3D11ShaderResourceView* diffuseMap = nullptr;
+		ID3D11ShaderResourceView* volumeMap = nullptr;
 
 		// Depth of the Model (Reduces Mesh Komplexity)
 		ID3D11ShaderResourceView* normalMap = nullptr;
@@ -26,12 +28,45 @@ namespace BEngine {
 		// Reflexion of Light
 		ID3D11ShaderResourceView* specularMap = nullptr;
 
-		// The Shader that will Render the Texture
-		Shader* drawShader = nullptr;
+		// Special 1 (i.e. Foam)
+		ID3D11ShaderResourceView* special_1 = nullptr;
+
+		// The sampler that will be used to render the Texture
+		ID3D11SamplerState* sampler = nullptr;
 
 	};
 
+	struct Bone {
+		char* name;
+		int index;
+		int depth;
+	};
+
+	struct BoneNode {
+		Bone* data;
+		BoneNode* children;
+		int childCount;
+	};
+
+	struct Animation {
+		char* name;
+
+		int startTime;
+		int endTime;
+		float speed;
+		float fps;
+		int playbackMode;
+
+		Bone* bones;
+		int boneCount;
+
+		int frameCount;
+	};
+
 	struct Mesh {
+
+		std::vector<Bone> bones;
+		std::vector<float4x4> boneMatrixes;
 
 		Texture modelTexture = {};
 
@@ -66,6 +101,8 @@ namespace BEngine {
 		unsigned int modelID = 0;
 		bool isStatic = false;
 		physx::PxShape* physicsModel = nullptr;
+
+		XMFLOAT3 boundingBox[2];
 	};
 
 	struct MeshManager {

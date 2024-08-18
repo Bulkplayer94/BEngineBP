@@ -65,6 +65,14 @@ inline float dot(float4 a, float4 b) {
     return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
 }
 
+inline float distance(float3 v1, float3 v2) {
+    return (v1.x - v2.x) + (v1.y - v2.y) + (v1.z - v2.z);
+}
+
+inline float euclideanDistance(float3 v1, float3 v2) {
+    return sqrtf(abs(distance(v1, v2)));
+}
+
 inline float3 operator* (float3 v, float f) {
     return {v.x*f, v.y*f, v.z*f};
 }

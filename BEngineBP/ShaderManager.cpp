@@ -3,6 +3,7 @@
 #include "globals.h"
 #include <filesystem>
 #include "3DMaths.h"
+#include <iostream>
 
 using namespace BEngine;
 
@@ -15,9 +16,9 @@ namespace ConstantBuffers {
 	};
 
 	struct MatrixCBuffer {
-		float4x4 worldMat;
-		float4x4 perspMat;
-		float4x4 viewMat;
+		XMFLOAT4X4 worldMat;
+		XMFLOAT4X4 perspMat;
+		XMFLOAT4X4 viewMat;
 	};
 
 	namespace Lights {
@@ -132,14 +133,16 @@ void ShaderManager::StartLoading()
 				continue;
 			}
 
-			constexpr D3D11_INPUT_ELEMENT_DESC inputElementDesc[] =
-			{
-				{ "POS",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-				{ "TEX",  0, DXGI_FORMAT_R32G32_FLOAT,    0, sizeof(float) * 3,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-				{ "NORM", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(float) * (3 + 2),    D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			constexpr D3D11_INPUT_ELEMENT_DESC layout[] = {
+				{ "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "NORM", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "BONEID", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "BONEW", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 			};
 
-			hResult = d3d11Device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &compiledShader->inputLayout);
+
+			hResult = d3d11Device->CreateInputLayout(layout, ARRAYSIZE(layout), vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &compiledShader->inputLayout);
 			if (FAILED(hResult)) {
 				errorReporter.Report(ErrorReporter::ErrorLevel_MEDIUM, "Shader Compiler Error");
 				continue;
@@ -197,7 +200,7 @@ void ShaderManager::Proc() {
 		ctx->Map(lightsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 		ConstantBuffers::LightCBuffer* buffer = (ConstantBuffers::LightCBuffer*)mappedSubresource.pData;
 		buffer->directionalLight.diffuseColor = { 1.F, 1.F, 1.F, 1.F };
-		buffer->directionalLight.lightDirection = { 0.0f, 0.0f, 1.0f };
+		buffer->directionalLight.lightDirection = { 0.0F, -0.5F, -0.5F };
 		ctx->Unmap(lightsBuffer, 0);
 
 		ctx->VSSetConstantBuffers(2, 1, &lightsBuffer);
@@ -205,9 +208,18 @@ void ShaderManager::Proc() {
 	}
 }
 
+void ShaderManager::SetDirectionalLight(float3 rotation, float4 color) {
+
+}
+
+int ShaderManager::AddPointLight(float3 position, float4 color) {
+
+	return 0;
+}
+
 static std::string currentShader = "";
 
-void Shader::SetContext(const float4x4& worldMat, const float4x4& perspectiveMat, const float4x4& viewMat)
+void Shader::SetContext(const XMMATRIX& worldMat, const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat)
 {
 	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
 
@@ -222,8 +234,14 @@ void Shader::SetContext(const float4x4& worldMat, const float4x4& perspectiveMat
 	D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 	ctx->Map(shaderManager.modelViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 	ConstantBuffers::MatrixCBuffer* buffer = (ConstantBuffers::MatrixCBuffer*)mappedSubresource.pData;
-	buffer->worldMat = worldMat;
-	buffer->perspMat = perspectiveMat;
-	buffer->viewMat = viewMat;
+
+	//buffer->worldMat = worldMat;
+	//buffer->perspMat = perspectiveMat;
+	//buffer->viewMat = viewMat;
+
+	XMStoreFloat4x4(&buffer->worldMat, worldMat);
+	XMStoreFloat4x4(&buffer->perspMat, perspectiveMat);
+	XMStoreFloat4x4(&buffer->viewMat, viewMat);
+
 	ctx->Unmap(shaderManager.modelViewBuffer, 0);
 }

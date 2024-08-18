@@ -5,7 +5,7 @@ namespace Globals {
     namespace Win32 {
         HINSTANCE hInstance = nullptr;
         HWND hWnd = nullptr;
-        float2 aspectRatio = {};
+        XMFLOAT2 aspectRatio = {};
 	}
 
 	namespace Direct3D {

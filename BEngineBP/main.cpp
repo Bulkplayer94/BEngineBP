@@ -15,7 +15,6 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "shader/SHADER_default.h"
 #include "IMOverlayManager.h"
 #include "EntityManager.h"
 
@@ -89,9 +88,29 @@ void LoadRessources() {
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
-    Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, -10.0F, 0.0F });
-    welt->SetRotation({ 1.5F, 0.0F, 0.0F });
-    welt->SetPosition({ -500.0F, -150.0F, -500.0F });
+    //Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, 0.0F, 0.0F });
+    //XMFLOAT3 weltRotation = welt->GetRotation();
+    //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
+
+    unsigned int cubeCount = 25;
+    float startPos = 0.F - (cubeCount / 2);
+
+    float spacing = 2.0f; // Abstand zwischen den Würfeln
+
+    // Schleife für die X-, Y- und Z-Achsen
+    for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
+        for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
+            for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
+                float currPosX = startPos + I1 * spacing;
+                float currPosY = startPos + I2 * spacing;
+                float currPosZ = startPos + I3 * spacing; // Position auf der Z-Achse
+
+                // Registriere den Würfel an der aktuellen Position
+                entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
+            }
+        }
+    }
+    
 
     isLoading = false;
 
@@ -103,6 +122,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 {
     freopen_s(&stream, "debug.log", "w", stdout);
     Globals::initGlobals(hInstance);
+
+    AllocConsole();
+    freopen_s(&stream, "conout$", "w", stdout);
 
     PhysXManager::SetupPhysX();
 
@@ -116,11 +138,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
     IMOverlayManager imOverlayManager;
 
-    //BEngine::LoadAdvancedShaders(d3d11Device);
-
-    SHADER DefaultShades = SHADER_DEFAULT::Load(Globals::Direct3D::d3d11Device);
-
-    float4x4 perspectiveMat = {};
+    XMMATRIX perspectiveMat = {};
     Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true; // To force initial perspectiveMat calculation
 
     // Timing
@@ -181,7 +199,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         }
         long long mögliche_leistung = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
 
-        float3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
+        XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
             using namespace BEngine;
 
@@ -240,7 +258,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         imOverlayManager.Proc();
 
         static bool mouseWasReleased = true;
-        float2 realMouseDrag = { 0,0 };
+        XMFLOAT2 realMouseDrag = { 0,0 };
         {
             POINT mousePoint;
             if (GetCursorPos(&mousePoint)) {
@@ -280,7 +298,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         // Get window dimensions
         float windowWidth, windowHeight;
         float windowAspectRatio;
-        {
+        {   
             RECT clientRect;
             GetClientRect(hWnd, &clientRect);
             windowWidth = static_cast<float>(clientRect.right - clientRect.left);
@@ -302,6 +320,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             mouseWasReleased = true;
         }
 
+        static float fov = 84.0F;
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
         {
             d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
@@ -312,10 +331,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             assert(SUCCEEDED(res));
 
             win32CreateD3D11RenderTargets(d3d11Device, d3d11SwapChain, &d3d11FrameBufferView, &depthBufferView);
-            perspectiveMat = makePerspectiveMat(windowAspectRatio, degreesToRadians(84), 0.1f, 1000.f);
+
+            //perspectiveMat = makePerspectiveMat(windowAspectRatio, degreesToRadians(84), 0.1f, 1000.f);
+            //XMFLOAT4X4 perspMat;
+            //std::memcpy(&perspMat.m, &perspectiveMat.m, sizeof(float) * 4 * 4);
+
+            
 
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
+
+        {
+            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), windowAspectRatio, 0.1f, 1000.f);
+            perspectiveMat = XMMatrixTranspose(perspectiveMat);
+
+            //XMFLOAT4X4 xmMatBuff;
+            //XMStoreFloat4x4(&xmMatBuff, xmMat);
+
+            //std::memcpy(&perspectiveMat.m, xmMatBuff.m, sizeof(float) * 4 * 4);
+        }
 
         static float mouseSensitivity = 20.0F;
 
@@ -338,9 +372,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         d3d11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         d3d11DeviceContext->PSSetSamplers(1, 1, &samplerState);
 
+        //float4x4 playerMatrix;
+        //{
+            //XMFLOAT4X4 storedViewMat;
+            //XMStoreFloat4x4(&storedViewMat, BEngine::playerCamera.viewMat);
+            //std::memcpy(&playerMatrix.m, &storedViewMat.m, sizeof(float) * 4 * 4);
+        //}
+
+        XMMATRIX playerMatrix = BEngine::playerCamera.viewMat;
+        
         if (!isLoading) {
             BEngine::shaderManager.Proc();
-            entityManager.Draw(&DefaultShades, &BEngine::meshManager, &BEngine::playerCamera.viewMat, &perspectiveMat);
+            entityManager.Draw(&playerMatrix, &perspectiveMat);
         }
 
         if (isLoading)
@@ -353,13 +396,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             drawList->AddRectFilled(ImVec2(0, 0), io.DisplaySize, ImColor(0, 0, 0));
             drawList->AddText(ImVec2((io.DisplaySize.x / 2) - (textSize.x / 2), (io.DisplaySize.y / 2) - (textSize.y / 2)), ImColor(255, 255, 255), "Loading...");
             
+            Sleep(500);
         }
         else {
             ImGui::Begin("Camera");
             {
                 std::string delta = "DeltaTime: " + std::to_string(dt);
                 ImGui::Text(delta.c_str());
-
+                
                 static float smoothFPS = 60.0F;
                 smoothFPS -= (smoothFPS - (1.0F / dt)) * dt * 0.8F;
 
@@ -389,6 +433,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
                 ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::playerCamera.rotation.x, BEngine::playerCamera.rotation.y, BEngine::playerCamera.rotation.z);
 
+                ImGui::SliderFloat("FOV", &fov, 0.1F, 120.0F);
+
                 ImGui::SliderFloat("Maus Empfindlichkeit", &mouseSensitivity, 0, 100);
 
                 ImGui::NewLine();
@@ -398,14 +444,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                 ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
+              
+                //ImDrawList* bgList = ImGui::GetBackgroundDrawList();
+                //XMFLOAT2 projectionPoint = BEngine::GuiLib::WorldToScreen(eyeTracePos, playerMatrix, perspectiveMat, windowWidth, windowHeight);
+                //bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 5.0F, ImColor(255, 0, 0, 100));
 
-                ImDrawList* bgList = ImGui::GetBackgroundDrawList();
-                float2 projectionPoint = BEngine::GuiLib::project3Dto2D(eyeTracePos, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
-                bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
+                //ImGui::Text("PlayerPos: %f %f", projectionPoint.x, projectionPoint.y);
 
-                PxExtendedVec3 playerPos = Globals::PhysX::mPlayerController->getPosition();
-                float2 playerProjection = BEngine::GuiLib::project3Dto2D({ (float)playerPos.x, (float)playerPos.y, (float)playerPos.z }, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
-                bgList->AddCircle({ playerProjection.x, playerProjection.y }, 2.0F, ImColor(0, 255, 0, 100));
+
 
             }
             ImGui::End();

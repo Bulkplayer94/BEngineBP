@@ -9,6 +9,9 @@
 #include "ImGui/imgui_impl_win32.h"
 #include "3DMaths.h"
 
+#include <DirectXMath.h>
+using namespace DirectX;
+
 namespace Globals {
 
 	bool initGlobals(HINSTANCE hInstance);
@@ -16,7 +19,7 @@ namespace Globals {
 	namespace Win32 {
 		extern HINSTANCE hInstance;
 		extern HWND hWnd;
-		extern float2 aspectRatio;
+		extern XMFLOAT2 aspectRatio;
 
 		bool initWin32(HINSTANCE hInstance);
 	}

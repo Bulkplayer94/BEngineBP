@@ -7,26 +7,30 @@
 
 namespace BEngine {
     namespace GuiLib {
-        float2 project3Dto2D(const float3& point, const float4x4& viewMat, const float4x4& projMat, float screenWidth, float screenHeight) {
+        XMFLOAT2 WorldToScreen(const XMFLOAT3& worldPoint, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, float screenWidth, float screenHeight)
+        {
+            XMMATRIX modelMatrix = viewMatrix * projectionMatrix;
 
-            const float4x4& modelMat = createIdentityMatrix();
+            // Corrected worldPoint.z usage
+            XMVECTOR clipPos = XMVector4Transform({ worldPoint.x, worldPoint.y, worldPoint.z, 1.0F }, modelMatrix);
 
-            const float4x4& transformationMat = modelMat * viewMat * projMat;
+            float clipW = XMVectorGetW(clipPos);
 
-            const float4& homogeneousPoint = { point.x, point.y, point.z, 1.0f };
-
-            const float4& screenPoint = homogeneousPoint * transformationMat;
-
-            const float invW = 1.0f / screenPoint.w;
-            if (invW < 0.001F) {
-                return { -1.0F, -1.0F };
+            // Check if w component is zero (to avoid division by zero)
+            if (clipW == 0.0f)
+            {
+                return XMFLOAT2(-1.0f, -1.0f); // Return some invalid position indicating failure
             }
-            float2 screenPosition = { screenPoint.x * invW, screenPoint.y * invW };
 
-            screenPosition.x = (screenPosition.x + 1.0f) * 0.5f * screenWidth;
-            screenPosition.y = (1.0f - screenPosition.y) * 0.5f * screenHeight;
+            XMVECTOR ndc = XMVectorDivide(clipPos, XMVectorReplicate(clipW));
 
-            return screenPosition;
+            float ndc_x = XMVectorGetX(ndc);
+            float ndc_y = XMVectorGetY(ndc);
+
+            float pos_x = (1.0F + ndc_x) * 0.5F * screenWidth;
+            float pos_y = (1.0F - ndc_y) * 0.5F * screenHeight;
+
+            return XMFLOAT2(pos_x, pos_y);
         }
     }
 }

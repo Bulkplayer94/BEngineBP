@@ -3,6 +3,9 @@
 #include <d3d11_1.h>
 #include <map>
 #include <string>
+#include <DirectXMath.h>
+using namespace DirectX;
+
 #include "data/shader/cb_shader_defines.hlsli"
 #include "3DMaths.h"
 
@@ -15,13 +18,16 @@ namespace BEngine {
 
 		std::string shaderName = "";
 
-		void SetContext(const float4x4& modelMat, const float4x4& perspectiveMat, const float4x4& viewMat);
+		void SetContext(const XMMATRIX& modelMat, const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat);
 	};
 
 	struct ShaderManager {
 
 		void StartLoading();
 		void Proc();
+
+		void SetDirectionalLight(float3 rotation, float4 color);
+		int AddPointLight(float3 pos, float4 color);
 
 		ID3D11Buffer* modelViewBuffer = nullptr;
 		ID3D11Buffer* animationBuffer = nullptr;

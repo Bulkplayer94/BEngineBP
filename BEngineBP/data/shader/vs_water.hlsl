@@ -1,8 +1,8 @@
-#include "cb_common.hlsli"
+#include "cb_water.hlsli"
 
-VertexOutput main(VertexInput input)
+VertexOutputWater main(VertexInput input)
 {
-    VertexOutput output;
+    VertexOutputWater output;
     output.pos = mul(float4(input.pos, 1.0F), worldMatrix);
     output.pos = mul(output.pos, viewMatrix);
     output.pos = mul(output.pos, perspectiveMatrix);
@@ -11,6 +11,8 @@ VertexOutput main(VertexInput input)
     
     output.norm = mul(input.norm, (float3x3) worldMatrix);
     output.norm = normalize(output.norm);
+    
+    output.height = clamp(input.pos.z / 10.0F, 0.0F, 1.0F);
     
     return output;
 }

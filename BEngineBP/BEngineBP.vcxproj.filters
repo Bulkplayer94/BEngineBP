@@ -86,12 +86,6 @@
     <ClInclude Include="PhysXManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="shader\SHADER_default.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="shader\SHADER_defines.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="ImGui\imconfig.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -138,9 +132,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="LightManager.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="shader\SHADER_water.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ShaderManager.h">

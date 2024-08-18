@@ -6,7 +6,9 @@
 #include <PxShape.h>
 #include "MeshManager.h"
 #include "3DMaths.h"
-#include "shader/SHADER_defines.h"
+
+#include <DirectXMath.h>
+using namespace DirectX;
 
 enum EntityType {
 	EntityType_NONE,
@@ -27,11 +29,11 @@ struct Entity {
 	physx::PxRigidActor* physicsActor;
 	bool isStatic;
 
-	void SetPosition(float3 pos);
-	float3 GetPosition();
+	void SetPosition(XMFLOAT3 pos);
+	XMFLOAT3 GetPosition();
 	
-	void SetRotation(float3 rot);
-	float3 GetRotation();
+	void SetRotation(XMFLOAT3 rot);
+	XMFLOAT3 GetRotation();
 };
 
 struct EntityManager {
@@ -39,9 +41,9 @@ struct EntityManager {
 	unsigned int entitySize = 0;
 	ID3D11Buffer* instanceBuffer = nullptr;
 
-	Entity* RegisterEntity(BEngine::Model* mMesh, float3 entityPos = {0.0F, 0.0F, 0.0F});
+	Entity* RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos = {0.0F, 0.0F, 0.0F});
 
-	void Draw(SHADER* shader, BEngine::MeshManager* meshManager, float4x4* viewMat, float4x4* perspMat);
+	void Draw(XMMATRIX* viewMat, XMMATRIX* perspMat);
 	
 	void CheckInstanceBuffer(unsigned int instanceNumber);
 	void Sort();

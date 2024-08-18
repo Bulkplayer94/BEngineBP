@@ -408,3 +408,13 @@ imgui.ini
 
 # Failure Logs
 *.log
+
+# Models
+ModelConverter/data/*
+BEngineBP/meshes/*
+
+*.bmodel
+*.bmtl
+*.bdesc
+
+ModelConverter/loadedData.txt

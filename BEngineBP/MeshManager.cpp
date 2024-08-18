@@ -31,11 +31,13 @@ void Mesh::RefillBuffers() {
 	Globals::Direct3D::d3d11DeviceContext->Unmap(vertexBuffer, 0);
 }
 
-ID3D11ShaderResourceView* LoadTexture(std::string filePath) 
+ID3D11ShaderResourceView* LoadTexture(std::string filePath)
 {
 	int texWidth, texHeight, texNumChannels = 0;
 
 	unsigned char* textureBytes = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texNumChannels, 4);
+	if (textureBytes == nullptr)
+		return LoadTexture("test.png");
 	int textureBytesPerRow = 4 * texWidth;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -43,7 +45,7 @@ ID3D11ShaderResourceView* LoadTexture(std::string filePath)
 	textureDesc.Height = texHeight;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -111,24 +113,45 @@ void MeshManager::StartLoading()
 		if (jsonData.contains("shaderProperties") && jsonData["shaderProperties"].is_object())
 		{
 			JSON propertyJson = jsonData["shaderProperties"];
-			
-			if (propertyJson.contains("shaderName") && propertyJson["shaderName"].is_string())
-				shader = &shaderManager.shaderList[propertyJson["shaderName"]];
 
+			if (propertyJson.contains("shaderName") && propertyJson["shaderName"].is_string())
+				shader = &shaderManager.shaderList[std::string(propertyJson["shaderName"])];
+
+		}
+
+		ID3D11ShaderResourceView* specialTexture_1 = nullptr;
+		{
+			JSON materialJson = jsonData["material"];
+			if (materialJson.contains("special_1") && materialJson["special_1"].is_string()) {
+				specialTexture_1 = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["special_1"]));
+			}
 		}
 
 		bool isDynamic = false;
 		if (jsonData.contains("dynamic") && jsonData["dynamic"].is_boolean())
 			isDynamic = jsonData["dynamic"];
 
-		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale);
+		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale | aiProcess_JoinIdenticalVertices);
+		if (scene == nullptr)
+			return;
 
+		XMFLOAT3 boundingBoxMax = { FLT_MIN, FLT_MIN, FLT_MIN };
+		XMFLOAT3 boundingBoxMin = { FLT_MAX, FLT_MAX, FLT_MAX };
 		for (unsigned int scene_iterator = 0; scene_iterator < scene->mNumMeshes; ++scene_iterator)
 		{
 			Mesh newMesh;
 			newMesh.isDynamic = isDynamic;
 
 			const aiMesh* mesh = scene->mMeshes[scene_iterator];
+
+			aiString textureName;
+			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			if (material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), textureName) != -1 && textureName.C_Str() != "" && std::filesystem::exists(std::string(pathString) + "\\" + std::string(textureName.C_Str()))) {
+				newMesh.modelTexture.volumeMap = LoadTexture(std::string(pathString) + "\\" + std::string(textureName.C_Str()));
+			}
+			else {
+				newMesh.modelTexture.volumeMap = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["volume"]));
+			}
 
 			std::vector<VertexData> vertexVec;
 			for (unsigned int vertexIterator = 0; vertexIterator < mesh->mNumVertices; ++vertexIterator)
@@ -141,9 +164,9 @@ void MeshManager::StartLoading()
 
 				float vertexU = 0.0F, vertexV = 0.0F;
 
-				if (mesh->mTextureCoords[scene_iterator]) {
-					vertexU = mesh->mTextureCoords[scene_iterator][vertexIterator].x;
-					vertexV = mesh->mTextureCoords[scene_iterator][vertexIterator].y;
+				if (mesh->mTextureCoords[0]) {
+					vertexU = mesh->mTextureCoords[0][vertexIterator].x;
+					vertexV = mesh->mTextureCoords[0][vertexIterator].y;
 				}
 				else if (mesh->mTangents != nullptr && mesh->mBitangents != nullptr) {
 					vertexU = mesh->mTangents[vertexIterator].x;
@@ -153,12 +176,14 @@ void MeshManager::StartLoading()
 				vertexVec.push_back({
 					vertexP.x, vertexP.y, vertexP.z,
 					vertexU, vertexV,
-					vertexN.x, vertexN.y, vertexN.z
+					vertexN.x, vertexN.y, vertexN.z,
+					-1.0F,-1.0F,-1.0F,-1.0F,
+					0.0F,0.0F,0.0F,0.0F
 					});
 
 				allVertices.push_back({ vertexP.x, vertexP.y, vertexP.z });
 			}
-			
+
 			if (newMesh.isDynamic)
 				newMesh.vertexData = vertexVec;
 
@@ -174,7 +199,7 @@ void MeshManager::StartLoading()
 			}
 
 			D3D11_BUFFER_DESC vertexBufferDesc = {};
-			vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(VertexData) * vertexVec.size());
+			vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(BEngine::VertexData) * vertexVec.size());
 
 			if (isDynamic)
 			{
@@ -209,13 +234,43 @@ void MeshManager::StartLoading()
 				collisionVertex.push_back({ currElem.pos[0], currElem.pos[1], currElem.pos[2] });
 			}
 
-			newMesh.modelTexture.diffuseMap = LoadTexture(std::string(pathString) + "\\" + std::string(jsonData["material"]["volume"]));
+			newMesh.modelTexture.special_1 = specialTexture_1;
 			newMesh.numIndices = static_cast<UINT>(indiceVec.size());
 
 			modelNums++;
 			newMesh.modelID = modelNums;
 
 			newMesh.shader = shader;
+
+			for (int boneID = 0; mesh->mNumBones > boneID; ++boneID)
+			{
+				aiBone* bone = mesh->mBones[boneID];
+				Bone newBone;
+				newBone.name = const_cast<char*>(bone->mName.C_Str());
+				newBone.index = boneID;
+
+				for (int weightID = 0; bone->mNumWeights > weightID; ++weightID)
+				{
+					aiVertexWeight* weight = &bone->mWeights[weightID];
+					VertexData* vtxData = &vertexVec[weight->mVertexId];
+					for (int vtxIterator = 0; 4 > vtxIterator; ++vtxIterator)
+					{
+						if (vtxData->boneids[vtxIterator] == -1.0F)
+							continue;
+
+						vtxData->boneids[vtxIterator] = boneID;
+						vtxData->boneWeights[vtxIterator] = weight->mWeight;
+					}
+				}
+
+				newMesh.bones.push_back(newBone);
+			}
+			
+			if (mesh->mAABB.mMin.x < boundingBoxMin.x || mesh->mAABB.mMin.y < boundingBoxMin.y || mesh->mAABB.mMin.z < boundingBoxMin.z)
+				boundingBoxMin = { mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z };
+
+			if (mesh->mAABB.mMax.x > boundingBoxMin.x || mesh->mAABB.mMax.y > boundingBoxMin.y || mesh->mAABB.mMax.z > boundingBoxMin.z)
+				boundingBoxMax = { mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z };
 
 			loadedModel->AddModel(newMesh);
 		}
@@ -241,7 +296,7 @@ void MeshManager::StartLoading()
 			triangleMeshDesc.points.count = static_cast<PxU32>(allVertices.size());
 			triangleMeshDesc.points.data = allVertices.data();
 			triangleMeshDesc.points.stride = sizeof(float3);
-			
+
 			triangleMeshDesc.triangles.count = static_cast<PxU32>(allIndices.size()) / 3;
 			triangleMeshDesc.triangles.data = allIndices.data();
 			triangleMeshDesc.triangles.stride = sizeof(unsigned int) * 3;
