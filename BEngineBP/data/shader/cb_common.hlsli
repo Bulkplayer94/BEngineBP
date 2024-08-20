@@ -22,11 +22,17 @@ Texture2D volume : register(t0);
 Texture2D diffuse : register(t1);
 Texture2D specular : register(t2);
 Texture2D normal : register(t3);
-Texture2D special_1 : register(t6);
+Texture2D special_1 : register(t4);
+
+struct InstancedViewBuffer_t
+{
+    float4x4 modelMatrix;
+};
+
+StructuredBuffer<InstancedViewBuffer_t> InstancedViewBuffers : register(t5);
 
 cbuffer modelViewBuffer : register(b0)
 {
-    float4x4 worldMatrix;
     float4x4 perspectiveMatrix;
     float4x4 viewMatrix;
 };
@@ -35,7 +41,7 @@ cbuffer animationBuffer : register(b1)
 {
     float deltaTime;
     double currTime;
-};
+}
 
 namespace Lights
 {

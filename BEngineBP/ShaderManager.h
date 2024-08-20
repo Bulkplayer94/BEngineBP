@@ -18,11 +18,12 @@ namespace BEngine {
 
 		std::string shaderName = "";
 
-		void SetContext(const XMMATRIX& modelMat, const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat);
+		void SetContext(const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat);
 	};
 
 	struct ShaderManager {
-
+		void CreateInstancedBuffer(int numElements);
+		void FillInstancedBuffer(int numElements, void* data);
 		void StartLoading();
 		void Proc();
 
@@ -32,6 +33,9 @@ namespace BEngine {
 		ID3D11Buffer* modelViewBuffer = nullptr;
 		ID3D11Buffer* animationBuffer = nullptr;
 		ID3D11Buffer* lightsBuffer = nullptr;
+		ID3D11Buffer* instancedBuffer = nullptr;
+		ID3D11ShaderResourceView* instancedBufferSRV = nullptr;
+		unsigned int instancedBufferCapacity = 0;
 
 		std::map<std::string, Shader> shaderList;
 

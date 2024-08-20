@@ -1,9 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 
+#include "pch.h"
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-
 
 #include "globals.h"
 #include "GuiLib.h"
@@ -88,6 +89,11 @@ void LoadRessources() {
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
+    BEngine::Model* model = BEngine::meshManager.meshList["welt"];
+    std::cout << "Welt Bounding Box X,Y,Z:\n"
+        << model->boundingBox[0].x << " " << model->boundingBox[0].y << " " << model->boundingBox[0].z << "\n"
+        << model->boundingBox[1].x << " " << model->boundingBox[1].y << " " << model->boundingBox[1].z << std::endl;
+
     //Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, 0.0F, 0.0F });
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
@@ -95,17 +101,15 @@ void LoadRessources() {
     unsigned int cubeCount = 25;
     float startPos = 0.F - (cubeCount / 2);
 
-    float spacing = 2.0f; // Abstand zwischen den Würfeln
+    float spacing = 7.5f; // Abstand zwischen den Würfeln
 
-    // Schleife für die X-, Y- und Z-Achsen
     for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
         for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
             for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
                 float currPosX = startPos + I1 * spacing;
                 float currPosY = startPos + I2 * spacing;
-                float currPosZ = startPos + I3 * spacing; // Position auf der Z-Achse
+                float currPosZ = startPos + I3 * spacing;
 
-                // Registriere den Würfel an der aktuellen Position
                 entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
             }
         }
@@ -139,7 +143,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     IMOverlayManager imOverlayManager;
 
     XMMATRIX perspectiveMat = {};
-    Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true; // To force initial perspectiveMat calculation
+    Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
 
     // Timing
     LONGLONG startPerfCount = 0;
@@ -257,7 +261,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         imOverlayManager.Proc();
 
-        static bool mouseWasReleased = true;
         XMFLOAT2 realMouseDrag = { 0,0 };
         {
             POINT mousePoint;
@@ -272,7 +275,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                     int _windowHeight = clientRect.bottom - clientRect.top;
 
                     ImVec2 newMousePos = { 0.0F,0.0F };
-
+                    
                     //ScreenToClient(hWnd, &mousePoint);
 
                     newMousePos.x = (float)mousePoint.x;
@@ -281,16 +284,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                     realMouseDrag = { (HWNDwindowWidth + (_windowWidth / 2))  - newMousePos.x, (HWNDwindowHeight + (_windowHeight / 2)) - newMousePos.y};
 
                     MousePos = newMousePos;
-
-
-                    //bool lastWindowStatus = true;
-                    if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
-                        //SetCursor(NULL);
-                    }
-                    else { 
-                        //HCURSOR SetCursor(LoadCursorW(0, IDC_ARROW));
-                    }
-                    
                 }
             }
         } 
@@ -315,9 +308,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
         }
 
+        // Handling Mouse Freeing and Aquiring
         if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+            if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED])
+            {
+                SetCursor(NULL);
+                while (ShowCursor(FALSE) >= 0); // Cursor sicher verstecken
+
+                RECT hwndInfo;
+                GetWindowRect(hWnd, &hwndInfo);
+                int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
+                int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
+
+                SetCursorPos(HWNDwindowWidth + static_cast<int>(windowWidth / 2), HWNDwindowHeight + static_cast<int>(windowHeight / 2));
+            }
+            else {
+                SetCursor(LoadCursorW(NULL, IDC_ARROW));
+                while (ShowCursor(TRUE) < 0); // Cursor sicher anzeigen
+            }
+
             Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
-            mouseWasReleased = true;
         }
 
         static float fov = 84.0F;
@@ -336,14 +346,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             //XMFLOAT4X4 perspMat;
             //std::memcpy(&perspMat.m, &perspectiveMat.m, sizeof(float) * 4 * 4);
 
-            
-
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
 
         {
             perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), windowAspectRatio, 0.1f, 1000.f);
-            perspectiveMat = XMMatrixTranspose(perspectiveMat);
+            //perspectiveMat = XMMatrixTranspose(perspectiveMat);
 
             //XMFLOAT4X4 xmMatBuff;
             //XMStoreFloat4x4(&xmMatBuff, xmMat);
@@ -371,13 +379,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         d3d11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         d3d11DeviceContext->PSSetSamplers(1, 1, &samplerState);
-
-        //float4x4 playerMatrix;
-        //{
-            //XMFLOAT4X4 storedViewMat;
-            //XMStoreFloat4x4(&storedViewMat, BEngine::playerCamera.viewMat);
-            //std::memcpy(&playerMatrix.m, &storedViewMat.m, sizeof(float) * 4 * 4);
-        //}
 
         XMMATRIX playerMatrix = BEngine::playerCamera.viewMat;
         
@@ -426,8 +427,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Max FPS: %.4f", maxFPS);
                 ImGui::Text("Min FPS: %.4f", minFPS);
                 
-
-
                 ImGui::Text("FPS: %.2f", smoothFPS);
                 ImGui::Text("Pos: %.2f, %.2f, %.2f", BEngine::playerCamera.position.x, BEngine::playerCamera.position.y, BEngine::playerCamera.position.z);
                 ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
@@ -441,18 +440,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                 ImGui::Text("Actor Num Static: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
                 ImGui::Text("Actor Num Dynamic: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
-
+                
                 ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
               
-                //ImDrawList* bgList = ImGui::GetBackgroundDrawList();
-                //XMFLOAT2 projectionPoint = BEngine::GuiLib::WorldToScreen(eyeTracePos, playerMatrix, perspectiveMat, windowWidth, windowHeight);
-                //bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 5.0F, ImColor(255, 0, 0, 100));
+                ImDrawList* bgList = ImGui::GetBackgroundDrawList();
+                XMFLOAT2 projectionPoint = BEngine::GuiLib::WorldToScreen(eyeTracePos, playerMatrix, perspectiveMat, windowWidth, windowHeight);
+                bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
 
-                //ImGui::Text("PlayerPos: %f %f", projectionPoint.x, projectionPoint.y);
-
-
-
+                ImGui::Text("PlayerPos: %f %f", projectionPoint.x, projectionPoint.y);
             }
             ImGui::End();
         }

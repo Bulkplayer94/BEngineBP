@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "globals.h"
 
 namespace Globals {
@@ -67,6 +68,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wparam, lparam);
+
     LRESULT result = 0;
     switch (msg)
     {
@@ -95,7 +97,7 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
 	winClass.lpfnWndProc = &WndProc;
 	winClass.hInstance = hInstance;
 	winClass.hIcon = LoadIconW(0, IDI_APPLICATION);
-	winClass.hCursor = LoadCursorW(0, IDC_ARROW);
+	winClass.hCursor = NULL;
 	winClass.lpszClassName = L"MyWindowClass";
 	winClass.hIconSm = LoadIconW(0, IDI_APPLICATION);
 
@@ -123,6 +125,16 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
 		MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
 		return GetLastError();
 	}
+
+    INT screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    INT screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    INT posX = (screenWidth - initialWidth) / 2;
+    INT posY = (screenHeight - initialHeight) / 2;
+
+    SetWindowPos(hWnd, NULL, posX, posY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+
+    while (ShowCursor(FALSE) >= 0);
 	
 	return true;
 }

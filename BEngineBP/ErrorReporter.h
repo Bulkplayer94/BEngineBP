@@ -8,7 +8,7 @@
 namespace BEngine {
 	struct ErrorReporter {
 
-		typedef enum ErrorLevel {
+		enum ErrorLevel {
 			ErrorLevel_LOW, // GREEN
 			ErrorLevel_MEDIUM, // YELLOW
 			ErrorLevel_HIGH, // RED

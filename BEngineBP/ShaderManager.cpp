@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "ShaderManager.h"
 #include "ErrorReporter.h"
 #include "globals.h"
@@ -9,6 +10,7 @@ using namespace BEngine;
 
 ShaderManager BEngine::shaderManager = {};
 
+
 namespace ConstantBuffers {
 	struct AnimationCBuffer {
 		float deltaTime;
@@ -16,9 +18,12 @@ namespace ConstantBuffers {
 	};
 
 	struct MatrixCBuffer {
-		XMFLOAT4X4 worldMat;
 		XMFLOAT4X4 perspMat;
 		XMFLOAT4X4 viewMat;
+	};
+
+	struct InstancedCBuffer {
+		XMFLOAT4X4 modelMat;
 	};
 
 	namespace Lights {
@@ -40,7 +45,50 @@ namespace ConstantBuffers {
 		Lights::PointLight pointLights[LIGHTS_COUNT];
 	};
 }
-                                  
+
+void ShaderManager::CreateInstancedBuffer(int numElements)
+{
+	// Beschreibe den Structured Buffer
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDesc.ByteWidth = sizeof(ConstantBuffers::InstancedCBuffer) * numElements;
+	bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	bufferDesc.CPUAccessFlags = 0;
+	bufferDesc.StructureByteStride = sizeof(ConstantBuffers::InstancedCBuffer);
+	bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+	HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&bufferDesc, nullptr, &instancedBuffer);
+	if (FAILED(hResult))
+		errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Instance Buffer Failed!");
+
+	// Shader Resource View erstellen
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.ElementWidth = numElements;
+
+	hResult = Globals::Direct3D::d3d11Device->CreateShaderResourceView(instancedBuffer, &srvDesc, &instancedBufferSRV);
+	if (FAILED(hResult))
+		errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of SRV for Instance Buffer Failed!");
+}
+
+
+void ShaderManager::FillInstancedBuffer(int numElements, void* data)
+{
+	if (instancedBuffer == nullptr || instancedBufferCapacity < numElements)
+	{
+		if (instancedBuffer)
+		{
+			instancedBuffer->Release();
+			instancedBufferSRV->Release();
+		}
+		CreateInstancedBuffer(numElements);
+	}
+
+	Globals::Direct3D::d3d11DeviceContext->UpdateSubresource(instancedBuffer, 0, nullptr, data, 0, 0);
+	Globals::Direct3D::d3d11DeviceContext->VSSetShaderResources(5, 1, &instancedBufferSRV);
+}
+
 
 void ShaderManager::StartLoading()
 {
@@ -90,6 +138,8 @@ void ShaderManager::StartLoading()
 		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(2, 1, &lightsBuffer);
 		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
+
+
 
 	std::filesystem::directory_iterator dirIterator("data\\shader");
 	for (auto& I : dirIterator) {
@@ -219,7 +269,7 @@ int ShaderManager::AddPointLight(float3 position, float4 color) {
 
 static std::string currentShader = "";
 
-void Shader::SetContext(const XMMATRIX& worldMat, const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat)
+void Shader::SetContext(const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat)
 {
 	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
 
@@ -235,11 +285,6 @@ void Shader::SetContext(const XMMATRIX& worldMat, const XMMATRIX& perspectiveMat
 	ctx->Map(shaderManager.modelViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 	ConstantBuffers::MatrixCBuffer* buffer = (ConstantBuffers::MatrixCBuffer*)mappedSubresource.pData;
 
-	//buffer->worldMat = worldMat;
-	//buffer->perspMat = perspectiveMat;
-	//buffer->viewMat = viewMat;
-
-	XMStoreFloat4x4(&buffer->worldMat, worldMat);
 	XMStoreFloat4x4(&buffer->perspMat, perspectiveMat);
 	XMStoreFloat4x4(&buffer->viewMat, viewMat);
 

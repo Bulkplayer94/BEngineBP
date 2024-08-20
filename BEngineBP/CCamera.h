@@ -18,11 +18,13 @@ namespace BEngine {
 
             // Combine translation and rotation
             viewMat = translationMat * rotationMat;
-            viewMat = XMMatrixTranspose(viewMat);
+            XMMATRIX viewMatT = XMMatrixTranspose(viewMat);
 
             // Extract the forward vector from the view matrix
-            XMVECTOR forwardVec = XMVectorSet(-viewMat.r[2].m128_f32[0], -viewMat.r[2].m128_f32[1], -viewMat.r[2].m128_f32[2], 0.0f);;
+            XMVECTOR forwardVec = XMVectorSet(-viewMatT.r[2].m128_f32[0], -viewMatT.r[2].m128_f32[1], -viewMatT.r[2].m128_f32[2], 0.0f);
             XMStoreFloat3(&forward, forwardVec);
+
+            
         }
     };
 
@@ -49,13 +51,13 @@ namespace BEngine {
 
             float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * Globals::Animation::deltaTime;
             if (ImGui::IsKeyDown(ImGuiKey_W))
-                camPos = XMVectorAdd(XMLoadFloat3(&position), XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT));
+                camPos += XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT);
             if (ImGui::IsKeyDown(ImGuiKey_S))
-                camPos = XMVectorSubtract(XMLoadFloat3(&position), XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT));
+                camPos -= XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT);
             if (ImGui::IsKeyDown(ImGuiKey_A))
-                camPos = XMVectorSubtract(XMLoadFloat3(&position), XMVectorScale(rightNormalized, CAM_MOVE_AMOUNT));
+                camPos -= XMVectorScale(rightNormalized, CAM_MOVE_AMOUNT);
             if (ImGui::IsKeyDown(ImGuiKey_D))
-                camPos = XMVectorAdd(XMLoadFloat3(&position), XMVectorScale(rightNormalized, CAM_MOVE_AMOUNT));
+                camPos += XMVectorScale(rightNormalized, CAM_MOVE_AMOUNT);
             if (ImGui::IsKeyDown(ImGuiKey_E))
                 camPos += XMVectorSet(0, CAM_MOVE_AMOUNT, 0, 0);
             if (ImGui::IsKeyDown(ImGuiKey_Q))

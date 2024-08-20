@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "ErrorReporter.h"
 
 BEngine::ErrorReporter BEngine::errorReporter = {};

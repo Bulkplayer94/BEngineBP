@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "EntityManager.h"
 
 #include <PxPhysicsAPI.h>
@@ -45,11 +46,6 @@ XMMATRIX PxTransformToFloat4x4Alt(const PxTransform& transform) {
 	XMFLOAT4X4 transMat;
 	std::memcpy(&transMat.m, &transformMat, sizeof(float) * 4 * 4);
 
-	//for (unsigned int I = 0; I != 4; ++I) {
-	//	const PxVec4& floatding = transformMat[I];
-	//	transMat.cols[I] = { floatding[0], floatding[1], floatding[2], floatding[3] };
-	//}
-
 	XMMATRIX storedTransMat = XMLoadFloat4x4(&transMat);
 
 	return storedTransMat;
@@ -64,17 +60,13 @@ bool compareMeshFunc(const std::pair<BEngine::Mesh*, XMMATRIX>& pair1, const std
 	return (pair1.first->modelID < pair2.first->modelID);
 }
 
-void EntityManager::Draw(XMMATRIX* viewMat, XMMATRIX* perspMat)
+void EntityManager::Draw(XMMATRIX* viewMatnT, XMMATRIX* perspMatnT)
 {
 	using namespace Globals::Direct3D;
 	using namespace BEngine;
 
-	float4x4 modelMatrix[100];
-
-	//std::vector<float4x4> floatVec = {};
-	//floatVec.reserve(100);
-
-	//memcpy(modelMatrix, floatVec.data() + 100, 100);
+	XMMATRIX viewMat = XMMatrixTranspose(*viewMatnT);
+	XMMATRIX perspMat = XMMatrixTranspose(*perspMatnT);
 
 	std::vector<std::pair<Mesh*, XMMATRIX>> modelVector;
 	modelVector.reserve(registeredEntitys.size());
@@ -93,25 +85,77 @@ void EntityManager::Draw(XMMATRIX* viewMat, XMMATRIX* perspMat)
 	modelVector.shrink_to_fit();
 	std::sort(modelVector.begin(), modelVector.end(), compareMeshFunc);
 
-	std::string currShader = "";
-	unsigned int lastModelID = 0;
-	for (auto& model : modelVector)
-	{
-		if (lastModelID != model.first->modelID) {
-			d3d11DeviceContext->PSSetShaderResources(0, 1, &model.first->modelTexture.volumeMap);
-			//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
-			d3d11DeviceContext->PSSetShaderResources(2, 1, &model.first->modelTexture.specularMap);
-			d3d11DeviceContext->PSSetShaderResources(3, 1, &model.first->modelTexture.normalMap);
-			d3d11DeviceContext->PSSetShaderResources(6, 1, &model.first->modelTexture.special_1);
+	static std::vector<XMFLOAT4X4> matrixBuffer(100);
+	matrixBuffer.clear();
 
-			d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.normalMap);
-			d3d11DeviceContext->IASetVertexBuffers(0, 1, &model.first->vertexBuffer, &modelStride, &modelOffset);
-			d3d11DeviceContext->IASetIndexBuffer(model.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
+	unsigned int currModelID = modelVector[0].first->modelID;
+	unsigned int currModelIndices = modelVector[0].first->numIndices;
+	unsigned int currModelCount = 0;
+	for (const auto& I : modelVector)
+	{
+		if (I.first->modelID != currModelID) {
+			shaderManager.FillInstancedBuffer(currModelCount, matrixBuffer.data());
+
+			d3d11DeviceContext->PSSetShaderResources(0, 1, &I.first->modelTexture.volumeMap);
+			//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
+			d3d11DeviceContext->PSSetShaderResources(2, 1, &I.first->modelTexture.specularMap);
+			d3d11DeviceContext->PSSetShaderResources(3, 1, &I.first->modelTexture.normalMap);
+			d3d11DeviceContext->PSSetShaderResources(6, 1, &I.first->modelTexture.special_1);
+
+			d3d11DeviceContext->PSSetShaderResources(1, 1, &I.first->modelTexture.normalMap);
+			d3d11DeviceContext->IASetVertexBuffers(0, 1, &I.first->vertexBuffer, &modelStride, &modelOffset);
+			d3d11DeviceContext->IASetIndexBuffer(I.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
 			d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
+
+			I.first->shader->SetContext(perspMat, viewMat);
+			d3d11DeviceContext->DrawIndexedInstanced(currModelIndices, currModelCount, 0, 0, 0);
+
+			matrixBuffer.clear();
+			currModelCount = 0;
+			currModelIndices = I.first->numIndices;
 		}
-		model.first->shader->SetContext(model.second, *perspMat, *viewMat);
-		d3d11DeviceContext->DrawIndexed(model.first->numIndices, 0, 0);
+
+		XMFLOAT4X4 modelMatrix;
+		XMStoreFloat4x4(&modelMatrix, I.second);
+
+		matrixBuffer.push_back(modelMatrix);
+		currModelCount++;
 	}
+
+	shaderManager.FillInstancedBuffer(currModelCount, matrixBuffer.data());
+
+	d3d11DeviceContext->PSSetShaderResources(0, 1, &modelVector[0].first->modelTexture.volumeMap);
+	//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
+	//d3d11DeviceContext->PSSetShaderResources(2, 1, &modelVector[0].first->modelTexture.specularMap);
+	//d3d11DeviceContext->PSSetShaderResources(3, 1, &modelVector[0].first->modelTexture.normalMap);
+	//d3d11DeviceContext->PSSetShaderResources(6, 1, &modelVector[0].first->modelTexture.special_1);
+
+	//d3d11DeviceContext->PSSetShaderResources(1, 1, &modelVector[0].first->modelTexture.normalMap);
+	d3d11DeviceContext->IASetVertexBuffers(0, 1, &modelVector[0].first->vertexBuffer, &modelStride, &modelOffset);
+	d3d11DeviceContext->IASetIndexBuffer(modelVector[0].first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
+	d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
+
+	modelVector[0].first->shader->SetContext(perspMat, viewMat);
+	d3d11DeviceContext->DrawIndexedInstanced(currModelIndices, currModelCount, 0, 0, 0);
+
+	//unsigned int lastModelID = 0;
+	//for (auto& model : modelVector)
+	//{
+	//	if (lastModelID != model.first->modelID) {
+	//		d3d11DeviceContext->PSSetShaderResources(0, 1, &model.first->modelTexture.volumeMap);
+	//		//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
+	//		d3d11DeviceContext->PSSetShaderResources(2, 1, &model.first->modelTexture.specularMap);
+	//		d3d11DeviceContext->PSSetShaderResources(3, 1, &model.first->modelTexture.normalMap);
+	//		d3d11DeviceContext->PSSetShaderResources(6, 1, &model.first->modelTexture.special_1);
+
+	//		d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.normalMap);
+	//		d3d11DeviceContext->IASetVertexBuffers(0, 1, &model.first->vertexBuffer, &modelStride, &modelOffset);
+	//		d3d11DeviceContext->IASetIndexBuffer(model.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//		d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
+	//	}
+	//	model.first->shader->SetContext(model.second, perspMat, viewMat);
+	//	d3d11DeviceContext->DrawIndexed(model.first->numIndices, 0, 0);
+	//}
 }
 
 void EntityManager::CheckInstanceBuffer(unsigned int instanceNumber) {
@@ -162,17 +206,17 @@ XMFLOAT3 Entity::GetRotation()
 	// roll (x-axis rotation)
 	double sinr_cosp = 2 * (quat.w * quat.x + quat.y * quat.z);
 	double cosr_cosp = 1 - 2 * (quat.x * quat.x + quat.y * quat.y);
-	rotation.x = std::atan2(sinr_cosp, cosr_cosp);
+	rotation.x = (float)std::atan2(sinr_cosp, cosr_cosp);
 
 	// pitch (y-axis rotation)
 	double sinp = std::sqrt(1 + 2 * (quat.w * quat.y - quat.x * quat.z));
 	double cosp = std::sqrt(1 - 2 * (quat.w * quat.y - quat.x * quat.z));
-	rotation.y = 2 * std::atan2(sinp, cosp) - M_PI / 2;
+	rotation.y = 2.F * (float)std::atan2(sinp, cosp) - (float)M_PI / 2.F;
 
 	// yaw (z-axis rotation)
 	double siny_cosp = 2 * (quat.w * quat.z + quat.x * quat.y);
 	double cosy_cosp = 1 - 2 * (quat.y * quat.y + quat.z * quat.z);
-	rotation.z = std::atan2(siny_cosp, cosy_cosp);
+	rotation.z = (float)std::atan2(siny_cosp, cosy_cosp);
 
 	return rotation;
 }

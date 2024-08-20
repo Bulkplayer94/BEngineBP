@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "MeshManager.h"
 #include <filesystem>
 #include <iostream>
@@ -131,7 +132,7 @@ void MeshManager::StartLoading()
 		if (jsonData.contains("dynamic") && jsonData["dynamic"].is_boolean())
 			isDynamic = jsonData["dynamic"];
 
-		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale | aiProcess_JoinIdenticalVertices);
+		const aiScene* scene = importer.ReadFile(std::string(pathString + "\\" + std::string(jsonData["modelMesh"])).c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded | aiProcess_GenUVCoords | aiProcess_GenNormals | aiProcess_GlobalScale | aiProcess_JoinIdenticalVertices | aiProcess_GenBoundingBoxes);
 		if (scene == nullptr)
 			return;
 
@@ -242,14 +243,14 @@ void MeshManager::StartLoading()
 
 			newMesh.shader = shader;
 
-			for (int boneID = 0; mesh->mNumBones > boneID; ++boneID)
+			for (unsigned int boneID = 0; mesh->mNumBones > boneID; ++boneID)
 			{
 				aiBone* bone = mesh->mBones[boneID];
 				Bone newBone;
 				newBone.name = const_cast<char*>(bone->mName.C_Str());
 				newBone.index = boneID;
 
-				for (int weightID = 0; bone->mNumWeights > weightID; ++weightID)
+				for (unsigned int weightID = 0; bone->mNumWeights > weightID; ++weightID)
 				{
 					aiVertexWeight* weight = &bone->mWeights[weightID];
 					VertexData* vtxData = &vertexVec[weight->mVertexId];
@@ -258,7 +259,7 @@ void MeshManager::StartLoading()
 						if (vtxData->boneids[vtxIterator] == -1.0F)
 							continue;
 
-						vtxData->boneids[vtxIterator] = boneID;
+						vtxData->boneids[vtxIterator] = (float)boneID;
 						vtxData->boneWeights[vtxIterator] = weight->mWeight;
 					}
 				}
@@ -269,7 +270,7 @@ void MeshManager::StartLoading()
 			if (mesh->mAABB.mMin.x < boundingBoxMin.x || mesh->mAABB.mMin.y < boundingBoxMin.y || mesh->mAABB.mMin.z < boundingBoxMin.z)
 				boundingBoxMin = { mesh->mAABB.mMin.x, mesh->mAABB.mMin.y, mesh->mAABB.mMin.z };
 
-			if (mesh->mAABB.mMax.x > boundingBoxMin.x || mesh->mAABB.mMax.y > boundingBoxMin.y || mesh->mAABB.mMax.z > boundingBoxMin.z)
+			if (mesh->mAABB.mMax.x > boundingBoxMax.x || mesh->mAABB.mMax.y > boundingBoxMax.y || mesh->mAABB.mMax.z > boundingBoxMax.z)
 				boundingBoxMax = { mesh->mAABB.mMax.x, mesh->mAABB.mMax.y, mesh->mAABB.mMax.z };
 
 			loadedModel->AddModel(newMesh);
@@ -323,6 +324,9 @@ void MeshManager::StartLoading()
 
 		modelNums++;
 		loadedModel->modelID = modelNums;
+
+		loadedModel->boundingBox[1] = boundingBoxMax;
+		loadedModel->boundingBox[0] = boundingBoxMin;
 
 		this->meshList[meshName] = loadedModel;
 	}

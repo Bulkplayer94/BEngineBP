@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "LuaManager.h"
 #include "EntityManager.h"
 #include <iostream> 
@@ -83,19 +84,19 @@ extern "C"
 					case 'x':
 					case 'X':
 					case 1:
-						lua_pushinteger(L, vec->x);
+						lua_pushinteger(L, (lua_Integer)vec->x);
 						break;
 
 					case 'y':
 					case 'Y':
 					case 2:
-						lua_pushinteger(L, vec->y);
+						lua_pushinteger(L, (lua_Integer)vec->y);
 						break;
 
 					case 'z':
 					case 'Z':
 					case 3:
-						lua_pushinteger(L, vec->z);
+						lua_pushinteger(L, (lua_Integer)vec->z);
 						break;
 
 					default:
@@ -110,9 +111,9 @@ extern "C"
 
 				LuaVector_t* luaVector = (LuaVector_t*)lua_newuserdata(L, sizeof(LuaVector_t));
 
-				float x = luaL_checkinteger(L, 1);
-				float y = luaL_checkinteger(L, 2);
-				float z = luaL_checkinteger(L, 3);
+				float x = (float)luaL_checkinteger(L, 1);
+				float y = (float)luaL_checkinteger(L, 2);
+				float z = (float)luaL_checkinteger(L, 3);
 
 				luaVector->x = x;
 				luaVector->y = y;
