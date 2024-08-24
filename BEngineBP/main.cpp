@@ -34,6 +34,7 @@
 #include "CCamera.h"
 
 #include "ImMenus.h"
+#include "Traces.h"
 
 #include <chrono>
 #include <thread>
@@ -91,10 +92,10 @@ void LoadRessources() {
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
 
-    BEngine::Model* model = BEngine::meshManager.meshList["welt"];
-    std::cout << "Welt Bounding Box X,Y,Z:\n"
-        << model->boundingBox[0].x << " " << model->boundingBox[0].y << " " << model->boundingBox[0].z << "\n"
-        << model->boundingBox[1].x << " " << model->boundingBox[1].y << " " << model->boundingBox[1].z << std::endl;
+    //BEngine::Model* model = BEngine::meshManager.meshList["welt"];
+    //std::cout << "Welt Bounding Box X,Y,Z:\n"
+    //    << model->boundingBox[0].x << " " << model->boundingBox[0].y << " " << model->boundingBox[0].z << "\n"
+    //    << model->boundingBox[1].x << " " << model->boundingBox[1].y << " " << model->boundingBox[1].z << std::endl;
 
     //Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { 0.0F, 0.0F, 0.0F });
     //XMFLOAT3 weltRotation = welt->GetRotation();
@@ -402,7 +403,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             Sleep(500);
         }
         else {
-            ImGui::Begin("Camera");
+            if (ImGui::Begin("Camera"))
             {
                 std::string delta = "DeltaTime: " + std::to_string(dt);
                 ImGui::Text(delta.c_str());
@@ -434,7 +435,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
                 ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::playerCamera.rotation.x, BEngine::playerCamera.rotation.y, BEngine::playerCamera.rotation.z);
 
-                ImGui::SliderFloat("FOV", &fov, 0.1F, 120.0F);
+                ImGui::SliderFloat("FOV", &fov, 0.01F, 120.0F);
 
                 ImGui::SliderFloat("Maus Empfindlichkeit", &mouseSensitivity, 0, 100);
 
@@ -446,12 +447,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
               
-                ImDrawList* bgList = ImGui::GetBackgroundDrawList();
-                XMFLOAT2 projectionPoint = BEngine::GuiLib::WorldToScreen(eyeTracePos, playerMatrix, perspectiveMat, windowWidth, windowHeight);
-                bgList->AddCircle({projectionPoint.x, projectionPoint.y}, 2.0F, ImColor(255, 0, 0, 100));
-
-                ImGui::Text("PlayerPos: %f %f", projectionPoint.x, projectionPoint.y);
             }
+
+            BEngine::Traces::RayTrace eyeTrace;
+            if (BEngine::Traces::Eyetrace(10000.0F, &eyeTrace))
+            {
+
+                ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
+                backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 2.0F, ImColor(255, 255, 255));
+
+            }
+
             ImGui::End();
         }
 
@@ -461,7 +468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        d3d11SwapChain->Present(0, 0);
+        d3d11SwapChain->Present(1, 0);
     }
 
     return 0;

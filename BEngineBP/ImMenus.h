@@ -28,11 +28,13 @@ namespace BEngine {
 				{
 					for (auto& I : meshManager.meshList)
 					{
-						if (ImGui::Button(I.first.c_str())) {
-							
-						}
+						if (!I.second->isStatic) {
+							if (ImGui::Button(I.first.c_str())) {
+								entityManager.RegisterEntity(I.second, playerCamera.position);
+							}
+						}	
 					}
-
+					
 					ImGui::EndListBox();
 				}
 				ImGui::End();

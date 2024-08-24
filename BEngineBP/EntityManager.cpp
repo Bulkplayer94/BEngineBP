@@ -58,11 +58,11 @@ UINT modelOffset = 0;
 
 static std::string currentShader = "";
 
-bool compareMeshFunc(const std::pair<BEngine::Mesh*, XMMATRIX>& pair1, const std::pair<const BEngine::Mesh*, XMMATRIX>& pair2) {
+static bool compareMeshFunc(const std::pair<BEngine::Mesh*, XMMATRIX>& pair1, const std::pair<const BEngine::Mesh*, XMMATRIX>& pair2) {
 	return (pair1.first->modelID < pair2.first->modelID);
 }
 
-inline void BindMeshResources(BEngine::Mesh* mesh)
+static inline void BindMeshResources(BEngine::Mesh* mesh)
 {
 	using namespace Globals::Direct3D;
 
@@ -72,7 +72,7 @@ inline void BindMeshResources(BEngine::Mesh* mesh)
 	d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
 }
 
-inline void RenderBatch(BEngine::Mesh* mesh, unsigned int instanceCount, const std::vector<XMFLOAT4X4>& matrixBuffer, const XMMATRIX& perspMat, const XMMATRIX& viewMat)
+static inline void RenderBatch(BEngine::Mesh* mesh, unsigned int instanceCount, const std::vector<XMFLOAT4X4>& matrixBuffer, const XMMATRIX& perspMat, const XMMATRIX& viewMat)
 {
 	using namespace Globals::Direct3D;
 
@@ -207,4 +207,3 @@ XMFLOAT3 Entity::GetRotation()
 
 	return rotation;
 }
-
