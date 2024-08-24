@@ -34,7 +34,7 @@
 #include "CCamera.h"
 
 #include "ImMenus.h"
-#include "Traces.h"
+#include "Querys.h"
 
 #include <chrono>
 #include <thread>

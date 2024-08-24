@@ -27,7 +27,7 @@ namespace BEngine {
 				return false;
 
 			const PxHitFlags& flag = hit.block.flags;
-			
+
 			if (flag.isSet(PxHitFlag::ePOSITION))
 				tracePtr->position = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
 
@@ -46,7 +46,7 @@ namespace BEngine {
 			physx::PxVec3 unitDir(direction.x, direction.y, direction.z);
 			physx::PxReal distance(maxDistance);
 			physx::PxRaycastBuffer hit;
-			
+
 			bool result = Globals::PhysX::mScene->raycast(pos, unitDir, distance, hit);
 			if (!result)
 				return false;
@@ -64,7 +64,9 @@ namespace BEngine {
 
 			return true;
 		}
+	}
 
+	namespace Querys {
 		bool GetEntitesInSphere(XMFLOAT3 position, float radius, std::vector<Entity*>* entityVec)
 		{
 			PxVec3 origin(position.x, position.y, position.z);

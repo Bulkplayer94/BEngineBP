@@ -146,7 +146,7 @@
     <ClInclude Include="ImMenus.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="Traces.h">
+    <ClInclude Include="Querys.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

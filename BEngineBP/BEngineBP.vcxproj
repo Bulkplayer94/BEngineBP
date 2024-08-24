@@ -207,7 +207,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="Traces.h" />
+    <ClInclude Include="Querys.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\hook.lua" />
