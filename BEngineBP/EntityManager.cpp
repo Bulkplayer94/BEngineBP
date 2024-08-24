@@ -32,6 +32,8 @@ Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos)
 	actorPos.p.z = entityPos.z;
 	newEnt->physicsActor->setGlobalPose(actorPos);
 
+	newEnt->physicsActor->userData = newEnt;
+
 	registeredEntitys.push_back(newEnt);
 	entitySize++;
 
@@ -60,59 +62,74 @@ bool compareMeshFunc(const std::pair<BEngine::Mesh*, XMMATRIX>& pair1, const std
 	return (pair1.first->modelID < pair2.first->modelID);
 }
 
+inline void BindMeshResources(BEngine::Mesh* mesh)
+{
+	using namespace Globals::Direct3D;
+
+	d3d11DeviceContext->PSSetShaderResources(0, 1, &mesh->modelTexture.volumeMap);
+	d3d11DeviceContext->IASetVertexBuffers(0, 1, &mesh->vertexBuffer, &modelStride, &modelOffset);
+	d3d11DeviceContext->IASetIndexBuffer(mesh->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
+	d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
+}
+
+inline void RenderBatch(BEngine::Mesh* mesh, unsigned int instanceCount, const std::vector<XMFLOAT4X4>& matrixBuffer, const XMMATRIX& perspMat, const XMMATRIX& viewMat)
+{
+	using namespace Globals::Direct3D;
+
+	BEngine::shaderManager.FillInstancedBuffer(instanceCount, (void*)matrixBuffer.data());
+	mesh->shader->SetContext(perspMat, viewMat);
+	d3d11DeviceContext->DrawIndexedInstanced(mesh->numIndices, instanceCount, 0, 0, 0);
+}
+
 void EntityManager::Draw(XMMATRIX* viewMatnT, XMMATRIX* perspMatnT)
 {
 	using namespace Globals::Direct3D;
 	using namespace BEngine;
 
+	// Transpose the view and perspective matrices
 	XMMATRIX viewMat = XMMatrixTranspose(*viewMatnT);
 	XMMATRIX perspMat = XMMatrixTranspose(*perspMatnT);
 
+	// Prepare a vector of mesh and corresponding model matrices
 	std::vector<std::pair<Mesh*, XMMATRIX>> modelVector;
 	modelVector.reserve(registeredEntitys.size());
 
 	for (auto& I : registeredEntitys)
 	{
 		PxTransform trans = I->physicsActor->getGlobalPose();
-		
-		const XMMATRIX& modelMatrix = PxTransformToFloat4x4Alt(trans);
+		XMMATRIX modelMatrix = PxTransformToFloat4x4Alt(trans);
+
 		for (auto& I2 : I->modelMesh->models)
 		{
-			modelVector.emplace_back( &I2, modelMatrix );
+			modelVector.emplace_back(&I2, modelMatrix);
 		}
 	}
 
 	modelVector.shrink_to_fit();
 	std::sort(modelVector.begin(), modelVector.end(), compareMeshFunc);
 
+	// Static matrix buffer to store the matrices for instancing
 	static std::vector<XMFLOAT4X4> matrixBuffer(100);
 	matrixBuffer.clear();
 
-	unsigned int currModelID = modelVector[0].first->modelID;
-	unsigned int currModelIndices = modelVector[0].first->numIndices;
+	Mesh* currMesh = nullptr;
 	unsigned int currModelCount = 0;
+
+	// Iterate over the sorted model vector
 	for (const auto& I : modelVector)
 	{
-		if (I.first->modelID != currModelID) {
-			shaderManager.FillInstancedBuffer(currModelCount, matrixBuffer.data());
+		Mesh* newMesh = I.first;
 
-			d3d11DeviceContext->PSSetShaderResources(0, 1, &I.first->modelTexture.volumeMap);
-			//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
-			d3d11DeviceContext->PSSetShaderResources(2, 1, &I.first->modelTexture.specularMap);
-			d3d11DeviceContext->PSSetShaderResources(3, 1, &I.first->modelTexture.normalMap);
-			d3d11DeviceContext->PSSetShaderResources(6, 1, &I.first->modelTexture.special_1);
+		// Check if the mesh has changed
+		if (currMesh == nullptr || newMesh->modelID != currMesh->modelID) {
+			if (currModelCount > 0) {
+				RenderBatch(currMesh, currModelCount, matrixBuffer, perspMat, viewMat);
+				matrixBuffer.clear();
+				currModelCount = 0;
+			}
 
-			d3d11DeviceContext->PSSetShaderResources(1, 1, &I.first->modelTexture.normalMap);
-			d3d11DeviceContext->IASetVertexBuffers(0, 1, &I.first->vertexBuffer, &modelStride, &modelOffset);
-			d3d11DeviceContext->IASetIndexBuffer(I.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
-			d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
-
-			I.first->shader->SetContext(perspMat, viewMat);
-			d3d11DeviceContext->DrawIndexedInstanced(currModelIndices, currModelCount, 0, 0, 0);
-
-			matrixBuffer.clear();
-			currModelCount = 0;
-			currModelIndices = I.first->numIndices;
+			currMesh = newMesh;
+			BindMeshResources(currMesh); // Bind new mesh resources
 		}
 
 		XMFLOAT4X4 modelMatrix;
@@ -122,40 +139,10 @@ void EntityManager::Draw(XMMATRIX* viewMatnT, XMMATRIX* perspMatnT)
 		currModelCount++;
 	}
 
-	shaderManager.FillInstancedBuffer(currModelCount, matrixBuffer.data());
-
-	d3d11DeviceContext->PSSetShaderResources(0, 1, &modelVector[0].first->modelTexture.volumeMap);
-	//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
-	//d3d11DeviceContext->PSSetShaderResources(2, 1, &modelVector[0].first->modelTexture.specularMap);
-	//d3d11DeviceContext->PSSetShaderResources(3, 1, &modelVector[0].first->modelTexture.normalMap);
-	//d3d11DeviceContext->PSSetShaderResources(6, 1, &modelVector[0].first->modelTexture.special_1);
-
-	//d3d11DeviceContext->PSSetShaderResources(1, 1, &modelVector[0].first->modelTexture.normalMap);
-	d3d11DeviceContext->IASetVertexBuffers(0, 1, &modelVector[0].first->vertexBuffer, &modelStride, &modelOffset);
-	d3d11DeviceContext->IASetIndexBuffer(modelVector[0].first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
-	d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
-
-	modelVector[0].first->shader->SetContext(perspMat, viewMat);
-	d3d11DeviceContext->DrawIndexedInstanced(currModelIndices, currModelCount, 0, 0, 0);
-
-	//unsigned int lastModelID = 0;
-	//for (auto& model : modelVector)
-	//{
-	//	if (lastModelID != model.first->modelID) {
-	//		d3d11DeviceContext->PSSetShaderResources(0, 1, &model.first->modelTexture.volumeMap);
-	//		//d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.diffuseMap);
-	//		d3d11DeviceContext->PSSetShaderResources(2, 1, &model.first->modelTexture.specularMap);
-	//		d3d11DeviceContext->PSSetShaderResources(3, 1, &model.first->modelTexture.normalMap);
-	//		d3d11DeviceContext->PSSetShaderResources(6, 1, &model.first->modelTexture.special_1);
-
-	//		d3d11DeviceContext->PSSetShaderResources(1, 1, &model.first->modelTexture.normalMap);
-	//		d3d11DeviceContext->IASetVertexBuffers(0, 1, &model.first->vertexBuffer, &modelStride, &modelOffset);
-	//		d3d11DeviceContext->IASetIndexBuffer(model.first->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
-	//		d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
-	//	}
-	//	model.first->shader->SetContext(model.second, perspMat, viewMat);
-	//	d3d11DeviceContext->DrawIndexed(model.first->numIndices, 0, 0);
-	//}
+	// Render any remaining instances
+	if (currModelCount > 0) {
+		RenderBatch(currMesh, currModelCount, matrixBuffer, perspMat, viewMat);
+	}
 }
 
 void EntityManager::CheckInstanceBuffer(unsigned int instanceNumber) {

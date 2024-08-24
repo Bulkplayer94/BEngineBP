@@ -33,6 +33,8 @@
 #include "ErrorReporter.h"
 #include "CCamera.h"
 
+#include "ImMenus.h"
+
 #include <chrono>
 #include <thread>
 #include <atomic>
@@ -98,7 +100,7 @@ void LoadRessources() {
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
-    unsigned int cubeCount = 25;
+    unsigned int cubeCount = 10;
     float startPos = 0.F - (cubeCount / 2);
 
     float spacing = 7.5f; // Abstand zwischen den Würfeln
@@ -454,6 +456,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         }
 
         BEngine::errorReporter.Draw();
+        BEngine::ImMenus::DrawImMenus();
+
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 

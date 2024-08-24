@@ -40,208 +40,7 @@ extern "C"
 			return 1;
 
 		}
-
-		namespace LuaVector {
-			const char* LuaVector_metaTable = "LuaVector_metaTable";
-
-#define getLuaVector(L, idx) \
-				LuaVector_t* vec; \
-				{ \
-					LuaVector_t** luaVec = (LuaVector_t**)luaL_checkudata(L, idx, LuaVector_metaTable); \
-					if (!luaVec || !*luaVec) { \
-						lua_pushstring(L, "Invalid Datatype! Expected \"LuaVector\""); \
-						return lua_error(L); \
-					} else { \
-						vec = *luaVec; \
-					} \
-				}
-
-			struct LuaVector_t {
-
-				float x, y, z;
-
-				static int __gc(lua_State* L) {
-
-					getLuaVector(L, 1);
-					//delete vec;
-					return 0;
-
-				}
-
-				static int __tostring(lua_State* L) {
-
-					getLuaVector(L, 1);
-					lua_pushstring(L, std::format("LuaVector<{}, {}, {}>", vec->x, vec->y, vec->z).c_str());
-					return 1;
-				}
-
-				static int __index(lua_State* L) {
-
-					getLuaVector(L, 1);
-					const char* indexStr = luaL_checkstring(L, 2);
-
-					switch (indexStr[0]) {
-					case 'x':
-					case 'X':
-					case 1:
-						lua_pushinteger(L, (lua_Integer)vec->x);
-						break;
-
-					case 'y':
-					case 'Y':
-					case 2:
-						lua_pushinteger(L, (lua_Integer)vec->y);
-						break;
-
-					case 'z':
-					case 'Z':
-					case 3:
-						lua_pushinteger(L, (lua_Integer)vec->z);
-						break;
-
-					default:
-						lua_pushnil(L);
-					}
-
-					return 1;
-				}
-			};
-
-			static int LuaVector_new(lua_State* L) {
-
-				LuaVector_t* luaVector = (LuaVector_t*)lua_newuserdata(L, sizeof(LuaVector_t));
-
-				float x = (float)luaL_checkinteger(L, 1);
-				float y = (float)luaL_checkinteger(L, 2);
-				float z = (float)luaL_checkinteger(L, 3);
-
-				luaVector->x = x;
-				luaVector->y = y;
-				luaVector->z = z;
-
-				luaL_getmetatable(L, LuaVector_metaTable);
-				lua_setmetatable(L, -1);
-
-				return 1;
-
-			}
-
-			static void register_LuaVector(lua_State* L) {
-
-				luaL_newmetatable(L, LuaVector_metaTable);
-
-				lua_pushstring(L, "__gc");
-				lua_pushcfunction(L, LuaVector_t::__gc);
-				lua_settable(L, -3);
-
-				lua_pushstring(L, "__tostring");
-				lua_pushcfunction(L, LuaVector_t::__tostring);
-				lua_settable(L, -3);
-
-				lua_pushstring(L, "__index");
-				lua_pushcfunction(L, LuaVector_t::__index);
-				//lua_newtable(L);
-
-
-				//lua_settable(L, -3);
-
-				lua_pop(L, 1);  // Metatable vom Stack entfernen
-
-				lua_register(L, "LuaVector", LuaVector_new);
-
-			}
-		}
 	}
-//		namespace LuaEntity {
-//			const char* LuaEntity_metaTable = "LuaEntity_metaTable";
-//
-//#define getLuaEntity(L, idx) \
-//				LuaEntity_t* ent; \
-//				{ \
-//					LuaEntity_t** luaEnt = (LuaEntity_t**)luaL_checkudata(L, idx, LuaEntity_metaTable); \
-//					if (!luaEnt || !*luaEnt) { \
-//						lua_pushstring(L, "Invalid Datatype! Expected \"LuaEntity\""); \
-//						return lua_error(L); \
-//					} else { \
-//						ent = *luaEnt; \
-//					} \
-//				} 
-//
-//			struct LuaEntity_t {
-//				Entity* ent;
-//				int entityID;
-//
-//				static int __gc(lua_State* L) {
-//
-//					getLuaEntity(L, 1);
-//					std::cout << std::hex << (uintptr_t)ent << std::endl;;
-//					return 0;
-//
-//				}
-//
-//				static int __tostring(lua_State* L) {
-//
-//					getLuaEntity(L, 1);
-//					lua_pushstring(L, std::format("LuaEntity<{}>", ent->entityID).c_str());
-//
-//					return 1;
-//
-//				}
-//
-//				static int GetID(lua_State* L) {
-//
-//					getLuaEntity(L, 1);
-//					lua_pushinteger(L, ent->entityID);
-//
-//					return 1;
-//
-//				}
-//
-//			};
-//
-//			static int LuaEntity_new(lua_State* L) {
-//
-//				LuaEntity_t* createdEnt = (LuaEntity_t*)lua_newuserdata(L, sizeof(LuaEntity_t));
-//				int entityID = luaL_checkint(L, 1);
-//
-//				createdEnt->entityID = entityID;
-//				createdEnt->ent = entityManager.GetEntity(entityID);
-//
-//				luaL_getmetatable(L, LuaEntity_metaTable);
-//				lua_setmetatable(L, -2);
-//
-//				return 1;
-//
-//			}
-//
-//			static void register_LuaEntity(lua_State* L) {
-//
-//				luaL_newmetatable(L, LuaEntity_metaTable);
-//
-//				lua_pushstring(L, "__gc");
-//				lua_pushcfunction(L, LuaEntity_t::__gc);
-//				lua_settable(L, -3);
-//
-//				lua_pushstring(L, "__tostring");
-//				lua_pushcfunction(L, LuaEntity_t::__tostring);
-//				lua_settable(L, -3);
-//
-//				lua_pushstring(L, "__index");
-//				lua_newtable(L);
-//
-//				lua_pushstring(L, "GetID");
-//				lua_pushcfunction(L, LuaEntity_t::GetID);
-//				lua_settable(L, -3);
-//
-//				lua_settable(L, -3);
-//
-//				lua_pop(L, 1);  // Metatable vom Stack entfernen
-//
-//				lua_register(L, "LuaEntity", LuaEntity_new);
-//
-//			}
-//		}
-//	}
 
 	static const struct luaL_Reg lua_BLib[]{
 		{"print", &BLua::print},
@@ -249,6 +48,199 @@ extern "C"
 		{NULL, NULL}
 	};
 }
+
+class LuaMyObject {
+private:
+	static const char* LUA_MYOBJECT;
+
+public:
+	// Constructor
+	static void Register(lua_State* L) {
+		lua_register(L, LUA_MYOBJECT, LuaMyObject::New);
+		luaL_newmetatable(L, LUA_MYOBJECT);
+		lua_pushcfunction(L, LuaMyObject::Delete);
+		lua_setfield(L, -2, "__gc");
+		lua_pushvalue(L, -1);
+		lua_setfield(L, -2, "__index");
+		lua_pushcfunction(L, LuaMyObject::Set);
+		lua_setfield(L, -2, "set");
+		lua_pushcfunction(L, LuaMyObject::Get);
+		lua_setfield(L, -2, "get");
+		lua_pop(L, 1);
+	}
+
+private:
+	double x;
+
+	// Private constructor
+	LuaMyObject(double x) : x(x) {}
+
+	// Lua binding for MyObject creation
+	static int New(lua_State* L) {
+		double x = luaL_checknumber(L, 1);
+		*reinterpret_cast<LuaMyObject**>(lua_newuserdata(L, sizeof(LuaMyObject*))) = new LuaMyObject(x);
+		luaL_setmetatable(L, LUA_MYOBJECT);
+		return 1;
+	}
+
+	// Lua binding for MyObject deletion
+	static int Delete(lua_State* L) {
+		delete* reinterpret_cast<LuaMyObject**>(lua_touserdata(L, 1));
+		return 0;
+	}
+
+	// Lua binding for MyObject::set method
+	static int Set(lua_State* L) {
+		LuaMyObject* obj = *reinterpret_cast<LuaMyObject**>(luaL_checkudata(L, 1, LUA_MYOBJECT));
+		obj->x = luaL_checknumber(L, 2);
+		return 0;
+	}
+
+	// Lua binding for MyObject::get method
+	static int Get(lua_State* L) {
+		LuaMyObject* obj = *reinterpret_cast<LuaMyObject**>(luaL_checkudata(L, 1, LUA_MYOBJECT));
+		lua_pushnumber(L, obj->x);
+		return 1;
+	}
+};
+
+// Define the metatable name
+const char* LuaMyObject::LUA_MYOBJECT = "MyObject";
+
+class LuaVector {
+public:
+	static const char* LUA_VECTOR;
+
+	XMVECTOR data;
+
+	LuaVector(float x, float y, float z, float w) {
+		XMFLOAT4 dataFloat(x, y, z, w);
+		data = XMLoadFloat4(&dataFloat);
+	}
+
+	LuaVector(const XMVECTOR& vec) {
+		this->data = vec;
+	}
+
+	static void Register(lua_State* L) {
+		lua_register(L, LUA_VECTOR, LuaVector::New);
+		luaL_newmetatable(L, LUA_VECTOR);
+
+		// Setze __index auf die Funktion LuaVector::Index
+		lua_pushcfunction(L, LuaVector::Index);
+		lua_setfield(L, -2, "__index");
+
+		lua_pushcfunction(L, LuaVector::Delete);
+		lua_setfield(L, -2, "__gc");
+		lua_pushcfunction(L, LuaVector::Add);
+		lua_setfield(L, -2, "add");
+		lua_pushcfunction(L, LuaVector::Subtract);
+		lua_setfield(L, -2, "subtract");
+		lua_pushcfunction(L, LuaVector::Scale);
+		lua_setfield(L, -2, "scale");
+		lua_pushcfunction(L, LuaVector::GetComponents);
+		lua_setfield(L, -2, "getComponents");
+		lua_pushcfunction(L, LuaVector::ToString);
+		lua_setfield(L, -2, "toString");
+		lua_pushcfunction(L, LuaVector::ToString);
+		lua_setfield(L, -2, "__tostring");
+		lua_pop(L, 1);
+	}
+
+private:
+	static int New(lua_State* L) {
+		float x = (float)luaL_checknumber(L, 1);
+		float y = (float)luaL_checknumber(L, 2);
+		float z = (float)luaL_checknumber(L, 3);
+		float w = (float)luaL_optnumber(L, 4, 1.0);
+
+		*reinterpret_cast<LuaVector**>(lua_newuserdata(L, sizeof(LuaVector*))) = new LuaVector(x, y, z, w);
+		luaL_setmetatable(L, LUA_VECTOR);
+		return 1;
+	}
+
+	static int Delete(lua_State* L) {
+		delete* reinterpret_cast<LuaVector**>(lua_touserdata(L, 1));
+		return 0;
+	}
+
+	// __index-Funktion zur Zugriffssteuerung auf die Komponenten
+	static int Index(lua_State* L) {
+		LuaVector* vec = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		const char* key = luaL_checkstring(L, 2);
+
+		if (strcmp(key, "x") == 0) {
+			lua_pushnumber(L, XMVectorGetX(vec->data));
+		}
+		else if (strcmp(key, "y") == 0) {
+			lua_pushnumber(L, XMVectorGetY(vec->data));
+		}
+		else if (strcmp(key, "z") == 0) {
+			lua_pushnumber(L, XMVectorGetZ(vec->data));
+		}
+		else if (strcmp(key, "w") == 0) {
+			lua_pushnumber(L, XMVectorGetW(vec->data));
+		}
+		else {
+			lua_getmetatable(L, 1);
+			lua_getfield(L, -1, key);
+			if (lua_isnil(L, -1)) {
+				luaL_error(L, "Ungültiges Attribut '%s' für Vector", key);
+			}
+			return 1;
+		}
+		return 1;
+	}
+
+	static int Add(lua_State* L) {
+		LuaVector* vec1 = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		LuaVector* vec2 = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 2, LUA_VECTOR));
+		LuaVector* result = new LuaVector(XMVectorAdd(vec1->data, vec2->data));
+		*reinterpret_cast<LuaVector**>(lua_newuserdata(L, sizeof(LuaVector*))) = result;
+		luaL_setmetatable(L, LUA_VECTOR);
+		return 1;
+	}
+
+	static int Subtract(lua_State* L) {
+		LuaVector* vec1 = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		LuaVector* vec2 = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 2, LUA_VECTOR));
+		LuaVector* result = new LuaVector(XMVectorSubtract(vec1->data, vec2->data));
+		*reinterpret_cast<LuaVector**>(lua_newuserdata(L, sizeof(LuaVector*))) = result;
+		luaL_setmetatable(L, LUA_VECTOR);
+		return 1;
+	}
+
+	static int Scale(lua_State* L) {
+		LuaVector* vec = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		float scalar = luaL_checknumber(L, 2);
+		LuaVector* result = new LuaVector(XMVectorScale(vec->data, scalar));
+		*reinterpret_cast<LuaVector**>(lua_newuserdata(L, sizeof(LuaVector*))) = result;
+		luaL_setmetatable(L, LUA_VECTOR);
+		return 1;
+	}
+
+	static int GetComponents(lua_State* L) {
+		LuaVector* vec = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		lua_pushnumber(L, XMVectorGetX(vec->data));
+		lua_pushnumber(L, XMVectorGetY(vec->data));
+		lua_pushnumber(L, XMVectorGetZ(vec->data));
+		lua_pushnumber(L, XMVectorGetW(vec->data));
+		return 4;
+	}
+
+	static int ToString(lua_State* L) {
+		LuaVector* vec = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
+		XMFLOAT4 storedVec;
+		XMStoreFloat4(&storedVec, vec->data);
+
+		std::string str = std::format("Vector({}, {}, {}, {})", storedVec.x, storedVec.y, storedVec.z, storedVec.w);
+		lua_pushstring(L, str.c_str());
+
+		return 1;
+	}
+};
+
+const char* LuaVector::LUA_VECTOR = "Vector";
 
 BEngine::LuaManager BEngine::luaManager = {};
 
@@ -260,8 +252,8 @@ void luaL_openBLib(lua_State* L) {
 	luaL_setfuncs(L, lua_BLib, 0);
 	lua_pop(L, 1);
 
-	BLua::LuaVector::register_LuaVector(L);
-	//BLua::LuaEntity::register_LuaEntity(L);
+	LuaMyObject::Register(L);
+	LuaVector::Register(L);
 
 }
 
