@@ -28,15 +28,15 @@ namespace ConstantBuffers {
 
 	namespace Lights {
 		struct DirectionalLight {
-			float3 lightDirection;
-			float4 diffuseColor;
-			float padding;
+			XMFLOAT3 lightDirection;
+			float padding1;
+			XMFLOAT4 diffuseColor;
 		};
 
 		struct PointLight {
-			float3 position;
-			float4 diffuseColor;
-			float padding;
+			XMFLOAT3 position;
+			float padding1;
+			XMFLOAT4 diffuseColor;
 		};
 	}
 
@@ -94,7 +94,7 @@ void ShaderManager::StartLoading()
 {
 	{
 		D3D11_BUFFER_DESC constantBufferDesc = {};
-		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::MatrixCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.ByteWidth = (sizeof(ConstantBuffers::MatrixCBuffer) + 15) & ~15;
 		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -110,7 +110,7 @@ void ShaderManager::StartLoading()
 	{
 		D3D11_BUFFER_DESC constantBufferDesc = {};
 		// ByteWidth must be a multiple of 16, per the docs
-		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::AnimationCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.ByteWidth = (sizeof(ConstantBuffers::AnimationCBuffer) + 15) & ~15;
 		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -126,7 +126,7 @@ void ShaderManager::StartLoading()
 	{
 		D3D11_BUFFER_DESC constantBufferDesc = {};
 		// ByteWidth must be a multiple of 16, per the docs
-		constantBufferDesc.ByteWidth = sizeof(ConstantBuffers::LightCBuffer) + 0xf & 0xfffffff0;
+		constantBufferDesc.ByteWidth = (sizeof(ConstantBuffers::LightCBuffer) + 15) & ~15;
 		constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -249,22 +249,26 @@ void ShaderManager::Proc() {
 		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 		ctx->Map(lightsBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 		ConstantBuffers::LightCBuffer* buffer = (ConstantBuffers::LightCBuffer*)mappedSubresource.pData;
+
 		buffer->directionalLight.diffuseColor = { 1.F, 1.F, 1.F, 1.F };
-		buffer->directionalLight.lightDirection = { 0.0F, -0.5F, -0.5F };
+		XMVECTOR normalizedDir = XMVector3Normalize({ 0.0F, -0.5F, -0.5F });
+		XMStoreFloat3(&buffer->directionalLight.lightDirection, normalizedDir);
+
+		buffer->pointLights[0].position = { 600.F, -30.F, 600.F };
+		buffer->pointLights[1].position = { -600.F, -30.F, 600.F };
+		buffer->pointLights[2].position = { 600.F, -30.F, -600.F };
+		buffer->pointLights[3].position = { -600.F, -30.F, -600.F };
+
+		buffer->pointLights[0].diffuseColor = { 1.F, 1.F, 1.F, 1.F };
+		buffer->pointLights[1].diffuseColor = { 0.F, 0.F, 1.F, 1.F };
+		buffer->pointLights[2].diffuseColor = { 0.F, 1.F, 0.F, 1.F };
+		buffer->pointLights[3].diffuseColor = { 1.F, 0.F, 0.F, 1.F };
+
 		ctx->Unmap(lightsBuffer, 0);
 
 		ctx->VSSetConstantBuffers(2, 1, &lightsBuffer);
 		ctx->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
-}
-
-void ShaderManager::SetDirectionalLight(float3 rotation, float4 color) {
-
-}
-
-int ShaderManager::AddPointLight(float3 position, float4 color) {
-
-	return 0;
 }
 
 static std::string currentShader = "";

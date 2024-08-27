@@ -101,23 +101,27 @@ void LoadRessources() {
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
-    unsigned int cubeCount = 10;
-    float startPos = 0.F - (cubeCount / 2);
+    //unsigned int cubeCount = 10;
+    //float startPos = 0.F - (cubeCount / 2);
 
-    float spacing = 7.5f; // Abstand zwischen den Würfeln
+    //float spacing = 7.5f; // Abstand zwischen den Würfeln
 
-    for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
-        for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
-            for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
-                float currPosX = startPos + I1 * spacing;
-                float currPosY = startPos + I2 * spacing;
-                float currPosZ = startPos + I3 * spacing;
+    //for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
+    //    for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
+    //        for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
+    //            float currPosX = startPos + I1 * spacing;
+    //            float currPosY = startPos + I2 * spacing;
+    //            float currPosZ = startPos + I3 * spacing;
 
-                entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
-            }
-        }
-    }
-    
+    //            entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
+    //        }
+    //    }
+    //}
+
+    entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { 0.0F, 0.0F, 0.0F });
+
+    Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { -400.0F, -200.0F, -400.0F });
+    welt->SetRotation({ XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
     isLoading = false;
 
@@ -169,7 +173,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     BEngine::luaManager.Init();
 
     ImVec2 MousePos = { 0.0F, 0.0F };
-
+    
     // Main Loop
     bool isRunning = true;
     while (isRunning)
@@ -345,21 +349,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             win32CreateD3D11RenderTargets(d3d11Device, d3d11SwapChain, &d3d11FrameBufferView, &depthBufferView);
 
-            //perspectiveMat = makePerspectiveMat(windowAspectRatio, degreesToRadians(84), 0.1f, 1000.f);
-            //XMFLOAT4X4 perspMat;
-            //std::memcpy(&perspMat.m, &perspectiveMat.m, sizeof(float) * 4 * 4);
-
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
 
         {
             perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), windowAspectRatio, 0.1f, 1000.f);
-            //perspectiveMat = XMMatrixTranspose(perspectiveMat);
-
-            //XMFLOAT4X4 xmMatBuff;
-            //XMStoreFloat4x4(&xmMatBuff, xmMat);
-
-            //std::memcpy(&perspectiveMat.m, xmMatBuff.m, sizeof(float) * 4 * 4);
         }
 
         static float mouseSensitivity = 20.0F;
@@ -414,8 +408,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 static float counter = 0;
                 counter += dt;
 
-                static float maxFPS = 0.0F;
-                static float minFPS = 1000000000.0F;
+                static float maxFPS = FLT_MIN;
+                static float minFPS = FLT_MAX;
                 const float FPS = (1.0F / dt);
 
                 if (counter > 0.5F) {
@@ -449,7 +443,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
               
             }
 
-            BEngine::Traces::RayTrace eyeTrace;
+            BEngine::PhysTrace eyeTrace;
             if (BEngine::Traces::Eyetrace(10000.0F, &eyeTrace))
             {
 
@@ -468,7 +462,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        d3d11SwapChain->Present(1, 0);
+        d3d11SwapChain->Present(0, 0);
     }
 
     return 0;

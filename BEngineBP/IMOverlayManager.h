@@ -18,5 +18,3 @@ private:
 	bool DrawDebug();
 
 };
-
-ImVec2 Convert3Dto2D(float3 point, float4x4* viewMat, float4x4* perspectiveMat, D3D11_VIEWPORT* viewPort);

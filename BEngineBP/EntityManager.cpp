@@ -8,8 +8,9 @@
 EntityManager entityManager = {};
 
 using namespace Globals::PhysX;
+using namespace physx;
 
-Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos)
+Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos, EntitySpawnFlags entitySpawnFlags)
 {
 	Entity* newEnt = new Entity();
 	newEnt->isStatic = mMesh->isStatic;
@@ -26,10 +27,25 @@ Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos)
 
 	mScene->addActor(*newEnt->physicsActor);
 
+	XMFLOAT3 spawnPos = { entityPos.x, entityPos.y, entityPos.z };
+	if ((entitySpawnFlags & EntitySpawnFlags_CENTER) != 0)
+	{
+		XMVECTOR bbMin = XMLoadFloat3(&mMesh->boundingBox[0]);
+		XMVECTOR bbMax = XMLoadFloat3(&mMesh->boundingBox[1]);
+
+		XMVECTOR bbCenter = XMVectorScale(XMVectorAdd(bbMin, bbMax), 0.5f);
+
+		XMVECTOR displacement = XMVectorNegate(bbCenter);
+
+		XMVECTOR newSpawnPos = XMVectorAdd(XMLoadFloat3(&spawnPos), displacement);
+
+		XMStoreFloat3(&spawnPos, newSpawnPos);
+	}
+
 	PxTransform actorPos = newEnt->physicsActor->getGlobalPose();
-	actorPos.p.x = entityPos.x;
-	actorPos.p.y = entityPos.y;
-	actorPos.p.z = entityPos.z;
+	actorPos.p.x = spawnPos.x;
+	actorPos.p.y = spawnPos.y;
+	actorPos.p.z = spawnPos.z;
 	newEnt->physicsActor->setGlobalPose(actorPos);
 
 	newEnt->physicsActor->userData = newEnt;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <PxPhysicsAPI.h>
+using namespace physx;
+
 #include <Windows.h>
 #include <d3d11_1.h>
 #include <assert.h>
@@ -11,6 +13,7 @@
 
 #include <DirectXMath.h>
 using namespace DirectX;
+
 
 namespace Globals {
 
@@ -88,12 +91,7 @@ namespace Globals {
 		extern long double currTime;
 	}
 
-	namespace PhysX {
-		using namespace physx;
-
-		//extern PxDefaultErrorCallback gDefaultErrorCallback;
-		//extern PxDefaultAllocator gDefaultAllocatorCallback;
-		
+	namespace PhysX {	
 		extern PxFoundation* mFoundation;
 		extern PxPvd* mPvd;
 		extern PxPhysics* mPhysics;
@@ -102,6 +100,5 @@ namespace Globals {
 		extern PxMaterial* mMaterial;
 		extern PxControllerManager* mControllerManager;
 		extern PxCapsuleController* mPlayerController;
-
 	}
 }

@@ -10,6 +10,12 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
+enum EntitySpawnFlags {
+	EntitySpawnFlags_NONE = 1 << 0,
+	EntitySpawnFlags_CENTER = 1 << 1,
+	EntitySpawnFlags_COUNT = 1 << 2,
+};
+
 enum EntityType {
 	EntityType_NONE,
 	EntityType_LIGHT,
@@ -41,7 +47,7 @@ struct EntityManager {
 	unsigned int entitySize = 0;
 	ID3D11Buffer* instanceBuffer = nullptr;
 
-	Entity* RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos = {0.0F, 0.0F, 0.0F});
+	Entity* RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos = {0.0F, 0.0F, 0.0F}, EntitySpawnFlags entitySpawnFlags = EntitySpawnFlags_NONE);
 
 	void Draw(XMMATRIX* viewMat, XMMATRIX* perspMat);
 	

@@ -26,10 +26,7 @@ namespace BEngine {
 		void FillInstancedBuffer(int numElements, void* data);
 		void StartLoading();
 		void Proc();
-
-		void SetDirectionalLight(float3 rotation, float4 color);
-		int AddPointLight(float3 pos, float4 color);
-
+		
 		ID3D11Buffer* modelViewBuffer = nullptr;
 		ID3D11Buffer* animationBuffer = nullptr;
 		ID3D11Buffer* lightsBuffer = nullptr;
