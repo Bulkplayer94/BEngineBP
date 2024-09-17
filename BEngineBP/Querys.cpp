@@ -63,7 +63,7 @@ bool BEngine::Querys::GetEntitesInSphere(const XMFLOAT3& position, float radius,
 	if (!Globals::PhysX::mScene->overlap(checkSphere, PxTransform(origin), hit))
 		return false;
 
-	for (int I = 0; I < hit.nbTouches; ++I)
+	for (unsigned int I = 0; I < hit.nbTouches; ++I)
 	{
 		if (hit.touches[I].actor->userData != nullptr)
 			entityVec->push_back((Entity*)hit.touches[I].actor->userData);
@@ -91,7 +91,7 @@ bool BEngine::Querys::GetEntitiesInBox(const XMFLOAT3& position, const XMFLOAT3&
 	if (!Globals::PhysX::mScene->overlap(boxGeom, PxTransform(origin), hit))
 		return false;
 
-	for (int I = 0; I < hit.nbTouches; ++I)
+	for (unsigned int I = 0; I < hit.nbTouches; ++I)
 	{
 		if (hit.touches[I].actor->userData != nullptr)
 			entityVec->push_back((Entity*)hit.touches[I].actor->userData);

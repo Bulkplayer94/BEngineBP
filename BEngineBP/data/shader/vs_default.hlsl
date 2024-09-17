@@ -21,5 +21,7 @@ VertexOutput main(VertexInput input, uint instancedID : SV_InstanceID)
         output.lightPos[i] = normalize(output.lightPos[i]);
     }
     
+    output.worldPos = worldPos;
+    
     return output;
 }

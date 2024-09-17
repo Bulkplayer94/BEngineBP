@@ -1,1 +1,1 @@
-#define LIGHTS_COUNT 4
+#define LIGHTS_COUNT 1

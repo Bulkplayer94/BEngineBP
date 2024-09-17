@@ -15,6 +15,7 @@ struct VertexOutput
     float2 uv : TEXCOORD;
     float3 norm : NORMAL;
     float3 lightPos[LIGHTS_COUNT] : TEXCOORD1;
+    float4 worldPos : WORLDPOS;
 };
 
 SamplerState textureSampler : register(s0);
@@ -31,6 +32,8 @@ struct InstancedViewBuffer_t
 };
 
 StructuredBuffer<InstancedViewBuffer_t> InstancedViewBuffers : register(t5);
+
+
 
 cbuffer modelViewBuffer : register(b0)
 {
@@ -49,14 +52,14 @@ namespace Lights
     struct DirectionalLight
     { 
         float3 lightDirection;
-        float padding1;
+        float brightness;
         float4 diffuseColor;
     };
     
     struct PointLight
     {
         float3 position;
-        float padding1;
+        float brightness;
         float4 diffuseColor;
     };
 }
@@ -66,8 +69,3 @@ cbuffer lightBuffer : register(b2)
     Lights::DirectionalLight directionalLight;
     Lights::PointLight pointLights[LIGHTS_COUNT];
 }
-
-//cbuffer boneBuffer : register(b3)
-//{
-//    float4x4 boneMatrix;
-//}

@@ -212,7 +212,7 @@ private:
 
 	static int Scale(lua_State* L) {
 		LuaVector* vec = *reinterpret_cast<LuaVector**>(luaL_checkudata(L, 1, LUA_VECTOR));
-		float scalar = luaL_checknumber(L, 2);
+		float scalar = (float)luaL_checknumber(L, 2);
 		LuaVector* result = new LuaVector(XMVectorScale(vec->data, scalar));
 		*reinterpret_cast<LuaVector**>(lua_newuserdata(L, sizeof(LuaVector*))) = result;
 		luaL_setmetatable(L, LUA_VECTOR);
@@ -261,9 +261,15 @@ void BEngine::LuaManager::Init() {
 	lState = luaL_newstate();
 	luaL_openBLib(lState);
 
+	luaJIT_setmode(lState, 0, LUAJIT_MODE_ENGINE);
+
+	auto startTime = std::chrono::steady_clock::now();
 	if (luaL_dofile(lState, "lua\\test_script.lua") != LUA_OK) {
 		std::cout << lua_tostring(lState, -1) << std::endl;
 	}
+	auto endTime = std::chrono::steady_clock::now();
+
+	std::cout << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime) << std::endl;
 
 	lua_close(lState);
 	lState = nullptr;

@@ -18,6 +18,7 @@ using namespace DirectX;
 namespace Globals {
 
 	bool initGlobals(HINSTANCE hInstance);
+	bool releaseGlobals();
 
 	namespace Win32 {
 		extern HINSTANCE hInstance;

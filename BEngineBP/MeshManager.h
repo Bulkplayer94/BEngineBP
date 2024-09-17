@@ -110,6 +110,7 @@ namespace BEngine {
 		unsigned int modelNums = 0;
 
 		void StartLoading();
+		void ReleaseObjects();
 
 	} extern meshManager;
 }

@@ -118,7 +118,7 @@ void LoadRessources() {
     //    }
     //}
 
-    entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { 0.0F, 0.0F, 0.0F });
+    //entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { 0.0F, 0.0F, 0.0F });
 
     Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { -400.0F, -200.0F, -400.0F });
     welt->SetRotation({ XMConvertToRadians(90.0F), 0.0F, 0.0F });
@@ -134,8 +134,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     freopen_s(&stream, "debug.log", "w", stdout);
     Globals::initGlobals(hInstance);
 
+//#ifdef _DEBUG
     AllocConsole();
     freopen_s(&stream, "conout$", "w", stdout);
+//#endif
 
     PhysXManager::SetupPhysX();
 
@@ -225,42 +227,48 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             if (status) {
                 eyeTracePos = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
 
-                if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft, false) && (hit.block.actor->getType() == physx::PxActorType::eRIGID_DYNAMIC)) {
-                    PxRigidDynamic* act = (PxRigidDynamic*)hit.block.actor;
+                if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+                {
+                    if (ImGui::IsKeyPressed(ImGuiKey_MouseLeft, false) && (hit.block.actor->getType() == physx::PxActorType::eRIGID_DYNAMIC)) {
+                        PxRigidDynamic* act = (PxRigidDynamic*)hit.block.actor;
 
-                    PxVec3 forceDir = hit.block.position - act->getGlobalPose().p;
-                    forceDir.normalize();
-                    forceDir *= -1;
+                        PxVec3 forceDir = hit.block.position - act->getGlobalPose().p;
+                        forceDir.normalize();
+                        forceDir *= -1;
 
-                    PxReal forceMagnitude = 2500.0f;
-                    act->addForce(forceDir * forceMagnitude, physx::PxForceMode::eIMPULSE);
+                        PxReal forceMagnitude = 2500.0f;
+                        act->addForce(forceDir * forceMagnitude, physx::PxForceMode::eIMPULSE);
+                    }
+
+                    if (ImGui::IsKeyPressed(ImGuiKey_MouseRight, false)) {
+                        PxVec3 explosionCenter = { eyeTracePos.x, eyeTracePos.y, eyeTracePos.z };
+                        float explosionStrength = 2500.0f;
+                        float explosionRadius = 50.0f;
+
+                        performExplosion(Globals::PhysX::mScene, explosionCenter, explosionStrength, explosionRadius);
+                    }
                 }
-
-                if (ImGui::IsKeyPressed(ImGuiKey_MouseRight, false)) {
-                    PxVec3 explosionCenter = { eyeTracePos.x, eyeTracePos.y, eyeTracePos.z };
-                    float explosionStrength = 2500.0f;
-                    float explosionRadius = 50.0f;
-
-                    performExplosion(Globals::PhysX::mScene, explosionCenter, explosionStrength, explosionRadius);
-                }
+                
             }
 
-            if (ImGui::IsKeyPressed(ImGuiKey_P)) {
-                Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
-                PxTransform trans = entity->physicsActor->getGlobalPose();
+            if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) {
+                if (ImGui::IsKeyPressed(ImGuiKey_P)) {
+                    Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
+                    PxTransform trans = entity->physicsActor->getGlobalPose();
 
-                trans.p.x = playerCamera.position.x;
-                trans.p.y = playerCamera.position.y;
-                trans.p.z = playerCamera.position.z;
+                    trans.p.x = playerCamera.position.x;
+                    trans.p.y = playerCamera.position.y;
+                    trans.p.z = playerCamera.position.z;
 
-                entity->physicsActor->setGlobalPose(trans);
+                    entity->physicsActor->setGlobalPose(trans);
 
-                PxRigidDynamic* dyn = (PxRigidDynamic*)entity->physicsActor;
-                dyn->addForce(unitDir * 1000.0F, physx::PxForceMode::eIMPULSE);
-            }
+                    PxRigidDynamic* dyn = (PxRigidDynamic*)entity->physicsActor;
+                    dyn->addForce(unitDir * 1000.0F, physx::PxForceMode::eIMPULSE);
+                }
 
-            if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z });
+                if (ImGui::IsKeyPressed(ImGuiKey_1)) {
+                    Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z });
+                }
             }
 
             Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
@@ -462,8 +470,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+#ifndef _DEBUG
         d3d11SwapChain->Present(0, 0);
+#else
+        d3d11SwapChain->Present(1, 0);
+#endif
     }
+
+    BEngine::meshManager.ReleaseObjects();
+    Globals::releaseGlobals();
 
     return 0;
 }

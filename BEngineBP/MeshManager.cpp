@@ -331,3 +331,17 @@ void MeshManager::StartLoading()
 		this->meshList[meshName] = loadedModel;
 	}
 }
+
+void BEngine::MeshManager::ReleaseObjects()
+{
+	for (auto& I : meshList)
+	{
+		for (auto& I2 : I.second->models)
+		{
+			I2.modelTexture.volumeMap->Release();
+
+			I2.vertexBuffer->Release();
+			I2.indiceBuffer->Release();
+		}
+	}
+}

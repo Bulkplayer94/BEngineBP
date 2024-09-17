@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "globals.h"
+//#include "data/resources/resource.h"
 
 namespace Globals {
 
@@ -64,6 +65,26 @@ bool Globals::initGlobals(HINSTANCE hInstance) {
 	return true;
 }
 
+bool Globals::releaseGlobals()
+{
+#define RELEASE_D3D11_OBJECT(obj) if (obj != NULL) {obj->Release(); obj = NULL; }; 
+
+    using namespace Globals::Direct3D;
+    
+    RELEASE_D3D11_OBJECT(d3d11Device)
+    RELEASE_D3D11_OBJECT(d3d11DeviceContext)
+    RELEASE_D3D11_OBJECT(d3dDebug)
+    RELEASE_D3D11_OBJECT(d3d11SwapChain)
+    RELEASE_D3D11_OBJECT(d3d11FrameBufferView)
+    RELEASE_D3D11_OBJECT(depthBufferView)
+    
+    RELEASE_D3D11_OBJECT(samplerState)
+    RELEASE_D3D11_OBJECT(rasterizerState)
+    RELEASE_D3D11_OBJECT(depthStencilState)
+
+    return true;
+}
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -96,10 +117,10 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
 	winClass.style = CS_HREDRAW | CS_VREDRAW;
 	winClass.lpfnWndProc = &WndProc;
 	winClass.hInstance = hInstance;
-	winClass.hIcon = LoadIconW(0, IDI_APPLICATION);
+	//winClass.hIcon = LoadIconW(0, MAKEINTRESOURCE(IDI_ICON1));
 	winClass.hCursor = NULL;
 	winClass.lpszClassName = L"MyWindowClass";
-	winClass.hIconSm = LoadIconW(0, IDI_APPLICATION);
+	//winClass.hIconSm = LoadIconW(0, MAKEINTRESOURCE(IDI_ICON1));
 
 	if (!RegisterClassExW(&winClass)) {
 		MessageBoxA(0, "RegisterClassEx failed", "Fatal Error", MB_OK);
@@ -113,7 +134,7 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
 
 	hWnd = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW,
 		winClass.lpszClassName,
-		L"BEngine",
+		L"BEngineBP",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		initialWidth,
@@ -135,6 +156,8 @@ bool Globals::Win32::initWin32(HINSTANCE hInstance) {
     SetWindowPos(hWnd, NULL, posX, posY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 
     while (ShowCursor(FALSE) >= 0);
+
+    SetForegroundWindow(hWnd);
 	
 	return true;
 }
@@ -311,9 +334,13 @@ bool Globals::Direct3D::win32CreateD3D11RenderTargets(ID3D11Device1* d3d11Device
     depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
     ID3D11Texture2D* depthBuffer;
-    d3d11Device->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
+    hResult = d3d11Device->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
+    if (FAILED(hResult))
+        return false;
 
-    d3d11Device->CreateDepthStencilView(depthBuffer, nullptr, depthBufferView);
+    hResult = d3d11Device->CreateDepthStencilView(depthBuffer, nullptr, depthBufferView);
+    if (FAILED(hResult))
+        return false;
 
     depthBuffer->Release();
 
