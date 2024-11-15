@@ -12,30 +12,9 @@ namespace BEngine {
 		long double m_currTime = 0.0;
 		float m_deltaTime = 0.0F;
 
-		bool Initialize() {
-			LARGE_INTEGER perfCount;
-			if (!QueryPerformanceCounter(&perfCount)) {
-				return false;
-			}
-			m_startPerfCounter = perfCount.QuadPart;
+		bool Initialize();
 
-			LARGE_INTEGER perfFreq;
-			if (!QueryPerformanceFrequency(&perfFreq)) {
-				return false;
-			}
-			m_perfCounterFreq = perfFreq.QuadPart;
-
-			return true;
-		}
-
-		void Tick() {
-			double previousTimeInSeconds = m_currTime;
-			LARGE_INTEGER perfCount;
-			QueryPerformanceCounter(&perfCount);
-
-			m_currTime = (double)(perfCount.QuadPart - m_startPerfCounter) / (double)m_perfCounterFreq;
-			m_deltaTime = (float)(m_currTime - previousTimeInSeconds);
-		}
+		void Tick();
 
 	} timeManager;
 }

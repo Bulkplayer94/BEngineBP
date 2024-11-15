@@ -31,6 +31,8 @@
 #include "LuaManager.h"
 #include "ShaderManager.h"
 
+#include "MouseManager.h"
+
 #include "ErrorReporter.h"
 #include "CCamera.h"
 
@@ -102,22 +104,22 @@ static void LoadRessources() {
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
-    //unsigned int cubeCount = 10;
-    //float startPos = 0.F - (cubeCount / 2);
+    unsigned int cubeCount = 10;
+    float startPos = 0.F - (cubeCount / 2);
 
-    //float spacing = 7.5f; // Abstand zwischen den Würfeln
+    float spacing = 7.5f; // Abstand zwischen den Würfeln
 
-    //for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
-    //    for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
-    //        for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
-    //            float currPosX = startPos + I1 * spacing;
-    //            float currPosY = startPos + I2 * spacing;
-    //            float currPosZ = startPos + I3 * spacing;
+    for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
+        for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
+            for (unsigned int I3 = 0; I3 < cubeCount; ++I3) {
+                float currPosX = startPos + I1 * spacing;
+                float currPosY = startPos + I2 * spacing;
+                float currPosZ = startPos + I3 * spacing;
 
-    //            entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
-    //        }
-    //    }
-    //}
+                entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
+            }
+        }
+    }
 
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { 0.0F, 0.0F, 0.0F });
 
@@ -132,17 +134,16 @@ static void LoadRessources() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
-    freopen_s(&stream, "debug.log", "w", stdout);
-    //Globals::initGlobals(hInstance);
     BEngine::win32Manager.Initialize(hInstance);
     BEngine::direct3DManager.Initialize();
     BEngine::physXManager.Initialize();
-
     BEngine::timeManager.Initialize();
 
 #ifdef _DEBUG
     AllocConsole();
     freopen_s(&stream, "conout$", "w", stdout);
+#else
+    freopen_s(&stream, "debug.log", "w", stdout);
 #endif
 
 
@@ -159,14 +160,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
     BEngine::luaManager.Init();
 
-    ImVec2 MousePos = { 0.0F, 0.0F };
-    
     // Main Loop
     while (BEngine::win32Manager.m_isRunning)
     {
         BEngine::win32Manager.CheckMessages();
         BEngine::timeManager.Tick();
         BEngine::physXManager.Tick();
+        BEngine::mouseManager.UpdateMousePosition();
+        BEngine::mouseManager.HandleMouseState();
 
         XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
@@ -230,55 +231,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         imOverlayManager.Proc();
 
-        XMFLOAT2 realMouseDrag = { 0,0 };
-        {
-            POINT mousePoint;
-            if (GetCursorPos(&mousePoint)) {
-
-                RECT hwndInfo;
-                RECT clientRect;
-                if (GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo) && GetClientRect(BEngine::win32Manager.m_hWnd, &clientRect)) {
-                    int HWNDwindowWidth = hwndInfo.left;
-                    int HWNDwindowHeight = hwndInfo.top;
-                    int _windowWidth = clientRect.right - clientRect.left;
-                    int _windowHeight = clientRect.bottom - clientRect.top;
-
-                    ImVec2 newMousePos = { 0.0F,0.0F };
-                    
-                    //ScreenToClient(hWnd, &mousePoint);
-
-                    newMousePos.x = (float)mousePoint.x;
-                    newMousePos.y = (float)mousePoint.y;
-
-                    realMouseDrag = { (HWNDwindowWidth + (_windowWidth / 2))  - newMousePos.x, (HWNDwindowHeight + (_windowHeight / 2)) - newMousePos.y};
-
-                    MousePos = newMousePos;
-                }
-            }
-        }
-
-        // Handling Mouse Freeing and Aquiring
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
-            if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED])
-            {
-                SetCursor(NULL);
-                while (ShowCursor(FALSE) >= 0);
-
-                RECT hwndInfo;
-                GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo);
-                int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
-                int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
-
-                SetCursorPos(HWNDwindowWidth + static_cast<int>(BEngine::win32Manager.m_width / 2), HWNDwindowHeight + static_cast<int>(BEngine::win32Manager.m_height / 2));
-            }
-            else {
-                SetCursor(LoadCursorW(NULL, IDC_ARROW));
-                while (ShowCursor(TRUE) < 0);
-            }
-
-            Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
-        }
-
         static float fov = 84.0F;
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
         {
@@ -302,7 +254,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
         static float mouseSensitivity = 20.0F;
 
-        BEngine::playerCamera.HandleInput(mouseSensitivity, realMouseDrag);
+        BEngine::playerCamera.HandleInput(mouseSensitivity, BEngine::mouseManager.GetRealMouseDrag());
         BEngine::playerCamera.Frame();
 
         BEngine::direct3DManager.ResetState();
@@ -369,11 +321,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Actor Num Dynamic: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
                 
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
-              
             }
 
+            //ImGui::ShowDemoWindow();
+
             BEngine::PhysTrace eyeTrace;
-            if (BEngine::Traces::Eyetrace(D3D11_FLOAT32_MAX, &eyeTrace))
+            if (BEngine::Traces::Eyetrace(FLT_MAX, &eyeTrace))
             {
 
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();

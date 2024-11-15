@@ -43,10 +43,11 @@ bool BEngine::PhysXManager::Initialize() {
     }
 
     bool recordMemoryAllocation = true;
-
+#ifdef _DEBUG
     m_pvd = PxCreatePvd(*m_foundation);
     m_transport = PxDefaultPvdFileTransportCreate("C:\\Users\\goris\\Desktop\\C++\\BEngineBP\\BEngineBP\\PxSaved.pvd");
     m_pvd->connect(*m_transport, PxPvdInstrumentationFlag::eALL);
+#endif // _DEBUG
 
     m_physics = PxCreatePhysics(PX_PHYSICS_VERSION, *m_foundation, PxTolerancesScale(), recordMemoryAllocation, m_pvd);
     if (!m_physics) {

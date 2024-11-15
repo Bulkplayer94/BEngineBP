@@ -87,6 +87,12 @@
     <ClCompile Include="Win32Manager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="MouseManager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeManager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DMaths.h">
@@ -171,6 +177,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="TimeManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
