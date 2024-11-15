@@ -1,50 +1,8 @@
 #pragma once
 
-#include <PxPhysicsAPI.h>
-using namespace physx;
-
-#include <Windows.h>
-#include <d3d11_1.h>
 #include <assert.h>
-#include "ImGui/imgui.h"
-#include "ImGui/imgui_impl_dx11.h"
-#include "ImGui/imgui_impl_win32.h"
-#include "3DMaths.h"
-
-#include <DirectXMath.h>
-using namespace DirectX;
-
 
 namespace Globals {
-
-	bool initGlobals(HINSTANCE hInstance);
-	bool releaseGlobals();
-
-	namespace Win32 {
-		extern HINSTANCE hInstance;
-		extern HWND hWnd;
-		extern XMFLOAT2 aspectRatio;
-
-		bool initWin32(HINSTANCE hInstance);
-	}
-
-	namespace Direct3D {
-		extern ID3D11Device1* d3d11Device;
-		extern ID3D11DeviceContext1* d3d11DeviceContext;
-		extern ID3D11Debug* d3dDebug;
-		extern IDXGISwapChain1* d3d11SwapChain;
-		
-		extern ID3D11RenderTargetView* d3d11FrameBufferView;
-		extern ID3D11DepthStencilView* depthBufferView;
-
-		extern ID3D11SamplerState* samplerState;
-		extern ID3D11RasterizerState* rasterizerState;
-		extern ID3D11DepthStencilState* depthStencilState;
-
-		bool initDirect3D();
-		bool win32CreateD3D11RenderTargets(ID3D11Device1* d3d11Device, IDXGISwapChain1* swapChain, ID3D11RenderTargetView** d3d11FrameBufferView, ID3D11DepthStencilView** depthBufferView);
-	}
-
 	namespace CUserCmd {
 		enum CUserCmd_ {
 			CUserCmd_None,
@@ -85,21 +43,5 @@ namespace Globals {
 		};
 
 		extern int loadingStatus;
-	}
-
-	namespace Animation {
-		extern float deltaTime;
-		extern long double currTime;
-	}
-
-	namespace PhysX {	
-		extern PxFoundation* mFoundation;
-		extern PxPvd* mPvd;
-		extern PxPhysics* mPhysics;
-		extern PxPvdTransport* mTransport;
-		extern PxScene* mScene;
-		extern PxMaterial* mMaterial;
-		extern PxControllerManager* mControllerManager;
-		extern PxCapsuleController* mPlayerController;
 	}
 }

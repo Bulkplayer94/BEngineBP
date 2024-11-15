@@ -1,13 +1,14 @@
 #include "pch.h"
 #include "EntityManager.h"
 
+#include "Direct3DManager.h"
 #include <PxPhysicsAPI.h>
 #include "globals.h"
 #include <algorithm>
+#include "PhysXManager.h"
 
 EntityManager entityManager = {};
 
-using namespace Globals::PhysX;
 using namespace physx;
 
 Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos, EntitySpawnFlags entitySpawnFlags)
@@ -19,13 +20,13 @@ Entity* EntityManager::RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos,
 
 
 	if (!newEnt->isStatic) {
-		newEnt->physicsActor = physx::PxCreateDynamic(*mPhysics, PxTransform(PxIdentity), *mMesh->physicsModel, 10.0F);
+		newEnt->physicsActor = physx::PxCreateDynamic(*BEngine::physXManager.m_physics, PxTransform(PxIdentity), *mMesh->physicsModel, 10.0F);
 	}
 	else {
-		newEnt->physicsActor = physx::PxCreateStatic(*mPhysics, PxTransform(PxIdentity), *mMesh->physicsModel);
+		newEnt->physicsActor = physx::PxCreateStatic(*BEngine::physXManager.m_physics, PxTransform(PxIdentity), *mMesh->physicsModel);
 	}
 
-	mScene->addActor(*newEnt->physicsActor);
+	BEngine::physXManager.m_scene->addActor(*newEnt->physicsActor);
 
 	XMFLOAT3 spawnPos = { entityPos.x, entityPos.y, entityPos.z };
 	if ((entitySpawnFlags & EntitySpawnFlags_CENTER) != 0)
@@ -80,26 +81,21 @@ static bool compareMeshFunc(const std::pair<BEngine::Mesh*, XMMATRIX>& pair1, co
 
 static inline void BindMeshResources(BEngine::Mesh* mesh)
 {
-	using namespace Globals::Direct3D;
-
-	d3d11DeviceContext->PSSetShaderResources(0, 1, &mesh->modelTexture.volumeMap);
-	d3d11DeviceContext->IASetVertexBuffers(0, 1, &mesh->vertexBuffer, &modelStride, &modelOffset);
-	d3d11DeviceContext->IASetIndexBuffer(mesh->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
-	d3d11DeviceContext->PSSetSamplers(0, 1, &samplerState);
+	BEngine::direct3DManager.m_d3d11DeviceContext->PSSetShaderResources(0, 1, &mesh->modelTexture.volumeMap);
+	BEngine::direct3DManager.m_d3d11DeviceContext->IASetVertexBuffers(0, 1, &mesh->vertexBuffer, &modelStride, &modelOffset);
+	BEngine::direct3DManager.m_d3d11DeviceContext->IASetIndexBuffer(mesh->indiceBuffer, DXGI_FORMAT_R32_UINT, 0);
+	BEngine::direct3DManager.m_d3d11DeviceContext->PSSetSamplers(0, 1, &BEngine::direct3DManager.m_d3d11SamplerState);
 }
 
 static inline void RenderBatch(BEngine::Mesh* mesh, unsigned int instanceCount, const std::vector<XMFLOAT4X4>& matrixBuffer, const XMMATRIX& perspMat, const XMMATRIX& viewMat)
 {
-	using namespace Globals::Direct3D;
-
 	BEngine::shaderManager.FillInstancedBuffer(instanceCount, (void*)matrixBuffer.data());
 	mesh->shader->SetContext(perspMat, viewMat);
-	d3d11DeviceContext->DrawIndexedInstanced(mesh->numIndices, instanceCount, 0, 0, 0);
+	BEngine::direct3DManager.m_d3d11DeviceContext->DrawIndexedInstanced(mesh->numIndices, instanceCount, 0, 0, 0);
 }
 
 void EntityManager::Draw(XMMATRIX* viewMatnT, XMMATRIX* perspMatnT)
 {
-	using namespace Globals::Direct3D;
 	using namespace BEngine;
 
 	// Transpose the view and perspective matrices

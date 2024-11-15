@@ -81,6 +81,12 @@
     <ClCompile Include="Querys.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Direct3DManager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32Manager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DMaths.h">
@@ -156,6 +162,15 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Querys.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3DManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32Manager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

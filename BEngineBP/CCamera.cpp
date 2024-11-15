@@ -1,5 +1,7 @@
-#include "pch.h"
+#include "pch.h"#
+#include "TimeManager.h"
 #include "CCamera.h"
+#include "ImGui\imgui.h"
 
 void BEngine::CCamera::Frame() {
     // Create translation and rotation matrices
@@ -37,7 +39,7 @@ void BEngine::CPlayerCamera::HandleInput(float sensitivity, XMFLOAT2 mouseDrag) 
     if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
         CAM_MOVE_SPEED *= 4;
 
-    float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * Globals::Animation::deltaTime;
+    float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * BEngine::timeManager.m_deltaTime;
     if (ImGui::IsKeyDown(ImGuiKey_W))
         camPos += XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT);
     if (ImGui::IsKeyDown(ImGuiKey_S))

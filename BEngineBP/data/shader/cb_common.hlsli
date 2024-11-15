@@ -21,10 +21,9 @@ struct VertexOutput
 SamplerState textureSampler : register(s0);
 
 Texture2D volume : register(t0);
-Texture2D diffuse : register(t1);
-Texture2D specular : register(t2);
-Texture2D normal : register(t3);
-Texture2D special_1 : register(t4);
+Texture2D specular : register(t1);
+Texture2D normal : register(t2);
+Texture2D special_1 : register(t3);
 
 struct InstancedViewBuffer_t
 {

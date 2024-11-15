@@ -1,10 +1,11 @@
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
 #include "pch.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+
+#include "Win32Manager.h"
+#include "Direct3DManager.h"
+#include "TimeManager.h"
 
 #include "globals.h"
 #include "GuiLib.h"
@@ -72,7 +73,7 @@ public:
     
 };
 
-void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explosionStrength, float explosionRadius) {
+static void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explosionStrength, float explosionRadius) {
     PxSphereGeometry sphereGeom(explosionRadius);
 
     const PxU32 maxNbHits = 256;
@@ -87,7 +88,7 @@ void performExplosion(PxScene* scene, const PxVec3& explosionCenter, float explo
     scene->sweep(sphereGeom, PxTransform(explosionCenter), PxVec3(1.0f, 0.0f, 0.0f), 0, sweepCallback, PxHitFlag::eDEFAULT, filterData);
 }
 
-void LoadRessources() {
+static void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
     BEngine::meshManager.StartLoading();
@@ -132,17 +133,19 @@ void LoadRessources() {
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
     freopen_s(&stream, "debug.log", "w", stdout);
-    Globals::initGlobals(hInstance);
+    //Globals::initGlobals(hInstance);
+    BEngine::win32Manager.Initialize(hInstance);
+    BEngine::direct3DManager.Initialize();
+    BEngine::physXManager.Initialize();
 
-//#ifdef _DEBUG
+    BEngine::timeManager.Initialize();
+
+#ifdef _DEBUG
     AllocConsole();
     freopen_s(&stream, "conout$", "w", stdout);
-//#endif
+#endif
 
-    PhysXManager::SetupPhysX();
 
-    using namespace Globals::Direct3D;
-    using namespace Globals::Win32;
     using namespace Globals::CUserCmd;
     using namespace physx;
 
@@ -154,63 +157,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     XMMATRIX perspectiveMat = {};
     Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
 
-    // Timing
-    LONGLONG startPerfCount = 0;
-    LONGLONG perfCounterFrequency = 0;
-    {
-        LARGE_INTEGER perfCount;
-        QueryPerformanceCounter(&perfCount);
-        startPerfCount = perfCount.QuadPart;
-        LARGE_INTEGER perfFreq;
-        QueryPerformanceFrequency(&perfFreq);
-        perfCounterFrequency = perfFreq.QuadPart;
-    }
-    long double currentTimeInSeconds = 0.0L;
-
-    std::cout << "Devices" << std::endl << \
-        d3d11Device << std::endl << \
-        d3d11DeviceContext << std::endl << \
-        d3d11SwapChain << std::endl; 
-
     BEngine::luaManager.Init();
 
     ImVec2 MousePos = { 0.0F, 0.0F };
     
     // Main Loop
-    bool isRunning = true;
-    while (isRunning)
+    while (BEngine::win32Manager.m_isRunning)
     {
-
-        float dt;
-        {
-            double previousTimeInSeconds = currentTimeInSeconds;
-            LARGE_INTEGER perfCount;
-            QueryPerformanceCounter(&perfCount);
-
-            currentTimeInSeconds = (double)(perfCount.QuadPart - startPerfCount) / (double)perfCounterFrequency;
-            dt = (float)(currentTimeInSeconds - previousTimeInSeconds);
-            //if (dt > (1.f / 60.f))
-            //    dt = (1.f / 60.f);
-
-            Globals::Animation::deltaTime = dt;
-            Globals::Animation::currTime = currentTimeInSeconds;
-        }
-        
-        MSG msg = {};
-        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
-        {
-            if (msg.message == WM_QUIT)
-                isRunning = false;
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
-
-        auto start = std::chrono::high_resolution_clock::now();
-        if (!isLoading) {
-            Globals::PhysX::mScene->simulate(dt);
-            Globals::PhysX::mScene->fetchResults(true);
-        }
-        long long mögliche_leistung = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
+        BEngine::win32Manager.CheckMessages();
+        BEngine::timeManager.Tick();
+        BEngine::physXManager.Tick();
 
         XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
@@ -223,7 +179,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             unitDir.normalize();
 
-            bool status = Globals::PhysX::mScene->raycast(origin, unitDir, maxDistance, hit);
+            bool status = BEngine::physXManager.m_scene->raycast(origin, unitDir, maxDistance, hit);
             if (status) {
                 eyeTracePos = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
 
@@ -245,7 +201,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                         float explosionStrength = 2500.0f;
                         float explosionRadius = 50.0f;
 
-                        performExplosion(Globals::PhysX::mScene, explosionCenter, explosionStrength, explosionRadius);
+                        performExplosion(BEngine::physXManager.m_scene, explosionCenter, explosionStrength, explosionRadius);
                     }
                 }
                 
@@ -270,8 +226,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                     Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z });
                 }
             }
-
-            Globals::PhysX::mPlayerController->move(PxVec3(0.0F, 0.0F, 2.0F), 1.0F, dt, PxControllerFilters());
         }
 
         imOverlayManager.Proc();
@@ -283,7 +237,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                 RECT hwndInfo;
                 RECT clientRect;
-                if (GetWindowRect(hWnd, &hwndInfo) && GetClientRect(hWnd, &clientRect)) {
+                if (GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo) && GetClientRect(BEngine::win32Manager.m_hWnd, &clientRect)) {
                     int HWNDwindowWidth = hwndInfo.left;
                     int HWNDwindowHeight = hwndInfo.top;
                     int _windowWidth = clientRect.right - clientRect.left;
@@ -301,26 +255,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                     MousePos = newMousePos;
                 }
             }
-        } 
-
-        // Get window dimensions
-        float windowWidth, windowHeight;
-        float windowAspectRatio;
-        {   
-            RECT clientRect;
-            GetClientRect(hWnd, &clientRect);
-            windowWidth = static_cast<float>(clientRect.right - clientRect.left);
-            windowHeight = static_cast<float>(clientRect.bottom - clientRect.top);
-            windowAspectRatio = windowWidth / windowHeight;
-
-            if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] && GetActiveWindow() == hWnd && GetFocus() == hWnd) {
-                RECT hwndInfo;
-                GetWindowRect(hWnd, &hwndInfo);
-                int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
-                int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
-
-                SetCursorPos(HWNDwindowWidth + static_cast<int>(windowWidth / 2), HWNDwindowHeight + static_cast<int>(windowHeight / 2));
-            }
         }
 
         // Handling Mouse Freeing and Aquiring
@@ -328,18 +262,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED])
             {
                 SetCursor(NULL);
-                while (ShowCursor(FALSE) >= 0); // Cursor sicher verstecken
+                while (ShowCursor(FALSE) >= 0);
 
                 RECT hwndInfo;
-                GetWindowRect(hWnd, &hwndInfo);
+                GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo);
                 int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
                 int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
 
-                SetCursorPos(HWNDwindowWidth + static_cast<int>(windowWidth / 2), HWNDwindowHeight + static_cast<int>(windowHeight / 2));
+                SetCursorPos(HWNDwindowWidth + static_cast<int>(BEngine::win32Manager.m_width / 2), HWNDwindowHeight + static_cast<int>(BEngine::win32Manager.m_height / 2));
             }
             else {
                 SetCursor(LoadCursorW(NULL, IDC_ARROW));
-                while (ShowCursor(TRUE) < 0); // Cursor sicher anzeigen
+                while (ShowCursor(TRUE) < 0);
             }
 
             Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
@@ -348,20 +282,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         static float fov = 84.0F;
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
         {
-            d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
-            d3d11FrameBufferView->Release();
-            depthBufferView->Release();
+            BEngine::direct3DManager.m_d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
+            BEngine::direct3DManager.m_d3d11FrameBufferView->Release();
+            BEngine::direct3DManager.m_d3d11DepthBufferView->Release();
 
-            HRESULT res = d3d11SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+            HRESULT res = BEngine::direct3DManager.m_d3d11SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
             assert(SUCCEEDED(res));
 
-            win32CreateD3D11RenderTargets(d3d11Device, d3d11SwapChain, &d3d11FrameBufferView, &depthBufferView);
+            //win32CreateD3D11RenderTargets(d3d11Device, d3d11SwapChain, &d3d11FrameBufferView, &depthBufferView);
+
+            BEngine::direct3DManager.CreateD3D11RenderTargets();
 
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
 
         {
-            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), windowAspectRatio, 0.1f, 1000.f);
+            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
         }
 
         static float mouseSensitivity = 20.0F;
@@ -369,21 +305,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         BEngine::playerCamera.HandleInput(mouseSensitivity, realMouseDrag);
         BEngine::playerCamera.Frame();
 
-        FLOAT backgroundColor[4] = { 0.1f, 0.2f, 0.6f, 1.0f };
-        d3d11DeviceContext->ClearRenderTargetView(d3d11FrameBufferView, backgroundColor);
-
-        d3d11DeviceContext->ClearDepthStencilView(depthBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-        D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)windowWidth, (FLOAT)windowHeight, 0.0f, 1.0f };
-        d3d11DeviceContext->RSSetViewports(1, &viewport);
-
-        d3d11DeviceContext->RSSetState(rasterizerState);
-        d3d11DeviceContext->OMSetDepthStencilState(depthStencilState, 0);
-
-        d3d11DeviceContext->OMSetRenderTargets(1, &d3d11FrameBufferView, depthBufferView);
-
-        d3d11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        d3d11DeviceContext->PSSetSamplers(1, 1, &samplerState);
+        BEngine::direct3DManager.ResetState();
 
         XMMATRIX playerMatrix = BEngine::playerCamera.viewMat;
         
@@ -407,18 +329,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         else {
             if (ImGui::Begin("Camera"))
             {
-                std::string delta = "DeltaTime: " + std::to_string(dt);
+                std::string delta = "DeltaTime: " + std::to_string(BEngine::timeManager.m_deltaTime);
                 ImGui::Text(delta.c_str());
                 
                 static float smoothFPS = 60.0F;
-                smoothFPS -= (smoothFPS - (1.0F / dt)) * dt * 0.8F;
+                smoothFPS -= (smoothFPS - (1.0F / BEngine::timeManager.m_deltaTime)) * BEngine::timeManager.m_deltaTime * 0.8F;
 
                 static float counter = 0;
-                counter += dt;
+                counter += BEngine::timeManager.m_deltaTime;
 
                 static float maxFPS = FLT_MIN;
                 static float minFPS = FLT_MAX;
-                const float FPS = (1.0F / dt);
+                const float FPS = (1.0F / BEngine::timeManager.m_deltaTime);
 
                 if (counter > 0.5F) {
                     if (maxFPS < smoothFPS)
@@ -443,20 +365,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                 ImGui::NewLine();
 
-                ImGui::Text("Actor Num Static: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
-                ImGui::Text("Actor Num Dynamic: %d", (unsigned int)Globals::PhysX::mScene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
+                ImGui::Text("Actor Num Static: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
+                ImGui::Text("Actor Num Dynamic: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
                 
-                ImGui::Text("M\xc3\xb6gliche Leistung: %f", 1.0F / (static_cast<float>(mögliche_leistung) / 10000000.0F));
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
               
             }
 
             BEngine::PhysTrace eyeTrace;
-            if (BEngine::Traces::Eyetrace(10000.0F, &eyeTrace))
+            if (BEngine::Traces::Eyetrace(D3D11_FLOAT32_MAX, &eyeTrace))
             {
 
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
-                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::playerCamera.viewMat, perspectiveMat, windowWidth, windowHeight);
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
                 backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 2.0F, ImColor(255, 255, 255));
 
             }
@@ -470,15 +391,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-#ifndef _DEBUG
-        d3d11SwapChain->Present(0, 0);
-#else
-        d3d11SwapChain->Present(1, 0);
-#endif
+        BEngine::direct3DManager.PresentFrame();
     }
 
     BEngine::meshManager.ReleaseObjects();
-    Globals::releaseGlobals();
+    BEngine::direct3DManager.ClearObjects();
 
     return 0;
 }

@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CCamera.cpp" />
+    <ClCompile Include="Direct3DManager.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="ErrorReporter.cpp" />
     <ClCompile Include="globals.cpp" />
@@ -186,8 +187,10 @@
     <ClCompile Include="PhysXManager.cpp" />
     <ClCompile Include="Querys.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="Win32Manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Direct3DManager.h" />
     <ClInclude Include="ImMenus.h" />
     <ClInclude Include="CCamera.h" />
     <ClInclude Include="GuiLib.h" />
@@ -213,6 +216,8 @@
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="Querys.h" />
+    <ClInclude Include="TimeManager.h" />
+    <ClInclude Include="Win32Manager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\hook.lua" />

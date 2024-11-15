@@ -1,13 +1,19 @@
 #include "pch.h"
 #include "IMOverlayManager.h"
+#include "Direct3DManager.h"
+#include "Win32Manager.h"
+
+#include "ImGui\imgui.h"
+#include "ImGui\imgui_impl_win32.h"
+#include "ImGui\imgui_impl_dx11.h"
 
 IMOverlayManager::IMOverlayManager() {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init(Globals::Win32::hWnd);
-	ImGui_ImplDX11_Init(Globals::Direct3D::d3d11Device, Globals::Direct3D::d3d11DeviceContext);
+	ImGui_ImplWin32_Init(BEngine::win32Manager.m_hWnd);
+	ImGui_ImplDX11_Init(BEngine::direct3DManager.m_d3d11Device, BEngine::direct3DManager.m_d3d11DeviceContext);
 	ImGui::StyleColorsDark();
 
 }

@@ -9,6 +9,8 @@
 #include <assimp/scene.h>
 #include "globals.h"
 #include "3DMaths.h"
+#include "Direct3DManager.h"
+#include "PhysXManager.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -26,10 +28,10 @@ void Mesh::RefillBuffers() {
 		return;
 
 	D3D11_MAPPED_SUBRESOURCE vertexSubresource;
-	Globals::Direct3D::d3d11DeviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertexSubresource);
+	BEngine::direct3DManager.m_d3d11DeviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertexSubresource);
 	//vertexSubresource.pData = this->vertexData.data();
 	memcpy(vertexSubresource.pData, this->vertexData.data(), this->vertexData.size() * sizeof(BEngine::VertexData));
-	Globals::Direct3D::d3d11DeviceContext->Unmap(vertexBuffer, 0);
+	BEngine::direct3DManager.m_d3d11DeviceContext->Unmap(vertexBuffer, 0);
 }
 
 ID3D11ShaderResourceView* LoadTexture(std::string filePath)
@@ -56,10 +58,10 @@ ID3D11ShaderResourceView* LoadTexture(std::string filePath)
 	textureSubresourceData.SysMemPitch = textureBytesPerRow;
 
 	ID3D11Texture2D* texture;
-	Globals::Direct3D::d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture);
+	BEngine::direct3DManager.m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture);
 
 	ID3D11ShaderResourceView* textureView;
-	Globals::Direct3D::d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView);
+	BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView);
 	texture->Release();
 
 	free(textureBytes);
@@ -214,7 +216,7 @@ void MeshManager::StartLoading()
 
 			D3D11_SUBRESOURCE_DATA vertexResource = { vertexVec.data() };
 
-			HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newMesh.vertexBuffer);
+			HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newMesh.vertexBuffer);
 			if (FAILED(hResult))
 				assert("Vertex Buffer Creation Failed");
 
@@ -225,7 +227,7 @@ void MeshManager::StartLoading()
 
 			D3D11_SUBRESOURCE_DATA indiceResource = { indiceVec.data() };
 
-			hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newMesh.indiceBuffer);
+			hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newMesh.indiceBuffer);
 			if (FAILED(hResult))
 				assert("indices Buffer Creation Failed");
 
@@ -283,11 +285,11 @@ void MeshManager::StartLoading()
 			convexMeshDesc.points.stride = sizeof(float3);
 			convexMeshDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
 
-			PxCookingParams convexMeshParams(Globals::PhysX::mPhysics->getTolerancesScale());
+			PxCookingParams convexMeshParams(BEngine::physXManager.m_physics->getTolerancesScale());
 
-			PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, Globals::PhysX::mPhysics->getPhysicsInsertionCallback());
+			PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, BEngine::physXManager.m_physics->getPhysicsInsertionCallback());
 
-			loadedModel->physicsModel = Globals::PhysX::mPhysics->createShape(PxConvexMeshGeometry(convexMesh), *Globals::PhysX::mMaterial, false);
+			loadedModel->physicsModel = BEngine::physXManager.m_physics->createShape(PxConvexMeshGeometry(convexMesh), *BEngine::physXManager.m_material, false);
 
 			convexMesh->release();
 		}
@@ -305,11 +307,11 @@ void MeshManager::StartLoading()
 			if (!triangleMeshDesc.isValid())
 				assert(false);
 
-			PxCookingParams triangleMeshParams(Globals::PhysX::mPhysics->getTolerancesScale());
+			PxCookingParams triangleMeshParams(BEngine::physXManager.m_physics->getTolerancesScale());
 
 			PxTriangleMesh* triangleMesh = PxCreateTriangleMesh(triangleMeshParams, triangleMeshDesc);
 
-			loadedModel->physicsModel = Globals::PhysX::mPhysics->createShape(PxTriangleMeshGeometry(triangleMesh), *Globals::PhysX::mMaterial, false);
+			loadedModel->physicsModel = BEngine::physXManager.m_physics->createShape(PxTriangleMeshGeometry(triangleMesh), *BEngine::physXManager.m_material, false);
 
 			triangleMesh->release();
 		}

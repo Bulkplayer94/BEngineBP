@@ -1,10 +1,12 @@
 #include "pch.h"
 #include "ShaderManager.h"
 #include "ErrorReporter.h"
+#include "Direct3DManager.h"
 #include "globals.h"
 #include <filesystem>
 #include "3DMaths.h"
 #include <iostream>
+#include "TimeManager.h"
 
 using namespace BEngine;
 
@@ -31,7 +33,7 @@ void ResizeableBuffer<T>::CreateBuffer() {
 	bufferDesc.StructureByteStride = sizeof(T);
 	bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT hRes = Globals::Direct3D::d3d11Device->CreateBuffer(&bufferDesc, nullptr, &d3d11Buffer);
+	HRESULT hRes = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &d3d11Buffer);
 	if (FAILED(hRes))
 		throw std::runtime_error("Creation of Structured Buffer Failed!");
 
@@ -40,7 +42,7 @@ void ResizeableBuffer<T>::CreateBuffer() {
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.ElementWidth = bufferCapacity;
 
-	hRes = Globals::Direct3D::d3d11Device->CreateShaderResourceView(d3d11Buffer, &srvDesc, &d3d11ShaderResources);
+	hRes = BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(d3d11Buffer, &srvDesc, &d3d11ShaderResources);
 	if (FAILED(hRes))
 		throw std::runtime_error("Creation of Structured Shader Resource View Failed!");
 }
@@ -50,7 +52,7 @@ bool ResizeableBuffer<T>::RefreshBuffer() {
 	if (dataBuffer.size() > bufferCapacity)
 		CreateBuffer();
 
-	Globals::Direct3D::d3d11DeviceContext->UpdateSubresource(d3d11Buffer, 0, nullptr, dataBuffer.data(), 0, 0);
+	BEngine::direct3DManager.m_d3d11DeviceContext->UpdateSubresource(d3d11Buffer, 0, nullptr, dataBuffer.data(), 0, 0);
 	return true;
 }
 
@@ -102,7 +104,7 @@ void ShaderManager::CreateInstancedBuffer(int numElements)
 	bufferDesc.StructureByteStride = sizeof(ConstantBuffers::InstancedCBuffer);
 	bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-	HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&bufferDesc, nullptr, &instancedBuffer);
+	HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &instancedBuffer);
 	if (FAILED(hResult))
 		errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Instance Buffer Failed!");
 
@@ -112,7 +114,7 @@ void ShaderManager::CreateInstancedBuffer(int numElements)
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.ElementWidth = numElements;
 
-	hResult = Globals::Direct3D::d3d11Device->CreateShaderResourceView(instancedBuffer, &srvDesc, &instancedBufferSRV);
+	hResult = BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(instancedBuffer, &srvDesc, &instancedBufferSRV);
 	if (FAILED(hResult))
 		errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of SRV for Instance Buffer Failed!");
 }
@@ -129,8 +131,8 @@ void ShaderManager::FillInstancedBuffer(unsigned int numElements, void* data)
 		CreateInstancedBuffer(numElements);
 	}
 
-	Globals::Direct3D::d3d11DeviceContext->UpdateSubresource(instancedBuffer, 0, nullptr, data, 0, 0);
-	Globals::Direct3D::d3d11DeviceContext->VSSetShaderResources(5, 1, &instancedBufferSRV);
+	BEngine::direct3DManager.m_d3d11DeviceContext->UpdateSubresource(instancedBuffer, 0, nullptr, data, 0, 0);
+	BEngine::direct3DManager.m_d3d11DeviceContext->VSSetShaderResources(5, 1, &instancedBufferSRV);
 }
 
 void ShaderManager::StartLoading()
@@ -142,12 +144,12 @@ void ShaderManager::StartLoading()
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &modelViewBuffer);
+		HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &modelViewBuffer);
 		if (FAILED(hResult))
 			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creatíon of ModelViewProj Buffer failed!");
 
-		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(0, 1, &modelViewBuffer);
-		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(0, 1, &modelViewBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->VSSetConstantBuffers(0, 1, &modelViewBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->PSSetConstantBuffers(0, 1, &modelViewBuffer);
 	}
 
 	{
@@ -158,12 +160,12 @@ void ShaderManager::StartLoading()
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &animationBuffer);
+		HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &animationBuffer);
 		if (FAILED(hResult))
 			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Animation Buffer Failed!");
 
-		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(1, 1, &animationBuffer);
-		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(1, 1, &animationBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->VSSetConstantBuffers(1, 1, &animationBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->PSSetConstantBuffers(1, 1, &animationBuffer);
 	}
 
 	{
@@ -174,12 +176,12 @@ void ShaderManager::StartLoading()
 		constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		HRESULT hResult = Globals::Direct3D::d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &lightsBuffer);
+		HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&constantBufferDesc, nullptr, &lightsBuffer);
 		if (FAILED(hResult))
 			errorReporter.Report(ErrorReporter::ErrorLevel_HIGH, "Creation of Light Buffer Failed!");
 
-		Globals::Direct3D::d3d11DeviceContext->VSSetConstantBuffers(2, 1, &lightsBuffer);
-		Globals::Direct3D::d3d11DeviceContext->PSSetConstantBuffers(2, 1, &lightsBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->VSSetConstantBuffers(2, 1, &lightsBuffer);
+		BEngine::direct3DManager.m_d3d11DeviceContext->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
 
 	std::filesystem::directory_iterator dirIterator("data\\shader");
@@ -206,7 +208,7 @@ void ShaderManager::StartLoading()
 		Shader* compiledShader = &shaderList[shaderName];
 
 		if (strcmp(shortFront.c_str(), "vs_") == 0) {
-			ID3D11Device* d3d11Device = Globals::Direct3D::d3d11Device;
+			ID3D11Device* d3d11Device = BEngine::direct3DManager.m_d3d11Device;
 
 			ID3DBlob* shaderCompilerBlob;
 			ID3DBlob* vertexShaderBlob;
@@ -245,7 +247,7 @@ void ShaderManager::StartLoading()
 		}
 
 		if (strcmp(shortFront.c_str(), "ps_") == 0) {
-			ID3D11Device* d3d11Device = Globals::Direct3D::d3d11Device;
+			ID3D11Device* d3d11Device = BEngine::direct3DManager.m_d3d11Device;
 
 			ID3DBlob* shaderCompilerBlob;
 			ID3DBlob* vertexShaderBlob;
@@ -267,7 +269,7 @@ void ShaderManager::StartLoading()
 }
 
 void ShaderManager::Proc() {
-	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
+	ID3D11DeviceContext* ctx = BEngine::direct3DManager.m_d3d11DeviceContext;
 
 	ctx->VSSetConstantBuffers(0, 1, &modelViewBuffer);
 	ctx->PSSetConstantBuffers(0, 1, &modelViewBuffer);
@@ -276,8 +278,8 @@ void ShaderManager::Proc() {
 		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 		ctx->Map(animationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 		ConstantBuffers::AnimationCBuffer* buffer = (ConstantBuffers::AnimationCBuffer*)mappedSubresource.pData;
-		buffer->deltaTime = Globals::Animation::deltaTime;
-		buffer->currTime = (double)Globals::Animation::currTime;
+		buffer->deltaTime = BEngine::timeManager.m_deltaTime;
+		buffer->currTime = (double)BEngine::timeManager.m_currTime;
 		ctx->Unmap(animationBuffer, 0);
 
 		ctx->VSSetConstantBuffers(1, 1, &animationBuffer);
@@ -316,7 +318,7 @@ static std::string currentShader = "";
 
 void Shader::SetContext(const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat)
 {
-	ID3D11DeviceContext* ctx = Globals::Direct3D::d3d11DeviceContext;
+	ID3D11DeviceContext* ctx = BEngine::direct3DManager.m_d3d11DeviceContext;
 
 	if (strcmp(currentShader.c_str(), shaderName.c_str()) != 0) {
 		ctx->IASetInputLayout(inputLayout);

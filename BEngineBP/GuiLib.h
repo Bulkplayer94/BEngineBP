@@ -3,7 +3,10 @@
 #include "ImGui/imgui.h"
 #include <d3d11_1.h>
 #include "3DMaths.h"
-#include "globals.h"
+
+#include <DirectXMath.h>
+
+using namespace DirectX;
 
 namespace BEngine {
     namespace GuiLib {

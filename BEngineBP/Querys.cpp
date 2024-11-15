@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Querys.h"
+#include "PhysXManager.h"
 
 bool BEngine::Traces::Eyetrace(float maxDistance, PhysTrace* tracePtr) {
 	PxVec3 origin = { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z };
@@ -7,7 +8,7 @@ bool BEngine::Traces::Eyetrace(float maxDistance, PhysTrace* tracePtr) {
 	PxReal maxDist = (physx::PxReal)maxDistance;
 	PxRaycastBuffer hit;
 
-	bool result = Globals::PhysX::mScene->raycast(origin, unitDir, maxDist, hit);
+	bool result = BEngine::physXManager.m_scene->raycast(origin, unitDir, maxDist, hit);
 	if (!result)
 		return false;
 
@@ -31,7 +32,7 @@ bool BEngine::Traces::Trace(const XMFLOAT3& position, const XMFLOAT3& direction,
 	physx::PxReal distance(maxDistance);
 	physx::PxRaycastBuffer hit;
 
-	bool result = Globals::PhysX::mScene->raycast(pos, unitDir, distance, hit);
+	bool result = BEngine::physXManager.m_scene->raycast(pos, unitDir, distance, hit);
 	if (!result)
 		return false;
 
@@ -60,7 +61,7 @@ bool BEngine::Querys::GetEntitesInSphere(const XMFLOAT3& position, float radius,
 
 	PxOverlapBuffer hit(buffer, bufferSize);
 
-	if (!Globals::PhysX::mScene->overlap(checkSphere, PxTransform(origin), hit))
+	if (!BEngine::physXManager.m_scene->overlap(checkSphere, PxTransform(origin), hit))
 		return false;
 
 	for (unsigned int I = 0; I < hit.nbTouches; ++I)
@@ -88,7 +89,7 @@ bool BEngine::Querys::GetEntitiesInBox(const XMFLOAT3& position, const XMFLOAT3&
 
 	PxBoxGeometry boxGeom(halfExtends);
 
-	if (!Globals::PhysX::mScene->overlap(boxGeom, PxTransform(origin), hit))
+	if (!BEngine::physXManager.m_scene->overlap(boxGeom, PxTransform(origin), hit))
 		return false;
 
 	for (unsigned int I = 0; I < hit.nbTouches; ++I)
