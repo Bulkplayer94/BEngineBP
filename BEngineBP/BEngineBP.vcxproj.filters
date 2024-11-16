@@ -93,6 +93,9 @@
     <ClCompile Include="TimeManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="SmokeEffect.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DMaths.h">
@@ -182,6 +185,9 @@
     <ClInclude Include="MouseManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="SmokeEffect.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\test_script.lua">
@@ -193,5 +199,9 @@
     <None Include="lua\hook.lua">
       <Filter>Lua</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="data\dynamic_shader\SmokeVS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\SmokePS.hlsl" />
   </ItemGroup>
 </Project>

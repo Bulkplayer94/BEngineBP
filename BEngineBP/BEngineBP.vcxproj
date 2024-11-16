@@ -119,6 +119,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)\libs\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)\libs\$(Platform)\$(Configuration)\*.lib" /VERBOSE:UNUSEDLIBS %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <FxCompile>
+      <VariableName>%(Filename)</VariableName>
+    </FxCompile>
+    <FxCompile>
+      <HeaderFileOutput>$(ProjectDir)/data/compiled_shader/%(Filename).h</HeaderFileOutput>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -145,6 +152,13 @@
       <AdditionalLibraryDirectories>$(SolutionDir)\libs\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
       <AdditionalOptions>"$(SolutionDir)\libs\$(Platform)\$(Configuration)\*.lib" /VERBOSE:UNUSEDLIBS /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <FxCompile>
+      <VariableName>%(Filename)</VariableName>
+    </FxCompile>
+    <FxCompile>
+      <HeaderFileOutput>$(ProjectDir)/data/compiled_shader/%(Filename).h</HeaderFileOutput>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CCamera.cpp" />
@@ -188,6 +202,7 @@
     <ClCompile Include="PhysXManager.cpp" />
     <ClCompile Include="Querys.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="SmokeEffect.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="Win32Manager.cpp" />
   </ItemGroup>
@@ -219,6 +234,7 @@
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="Querys.h" />
+    <ClInclude Include="SmokeEffect.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Win32Manager.h" />
   </ItemGroup>
@@ -226,6 +242,22 @@
     <None Include="lua\hook.lua" />
     <None Include="lua\test.lua" />
     <None Include="lua\test_script.lua" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="data\dynamic_shader\SmokePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="data\dynamic_shader\SmokeVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)data\compiled_shader\%(Filename).h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)data\compiled_shader\%(Filename).h</HeaderFileOutput>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

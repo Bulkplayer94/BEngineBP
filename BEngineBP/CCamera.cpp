@@ -53,8 +53,8 @@ void BEngine::CPlayerCamera::HandleInput(float sensitivity, XMFLOAT2 mouseDrag) 
     if (ImGui::IsKeyDown(ImGuiKey_Q))
         camPos -= XMVectorSet(0, CAM_MOVE_AMOUNT, 0, 0);
 
-    rotation.z += mouseDrag.x * (sensitivity / 10000);
-    rotation.y += mouseDrag.y * (sensitivity / 10000);
+    rotation.z += (mouseDrag.x * (sensitivity / 10000)) * (BEngine::timeManager.m_deltaTime * 500);
+    rotation.y += (mouseDrag.y * (sensitivity / 10000)) * (BEngine::timeManager.m_deltaTime * 500);
 
     // Wrap yaw to avoid floating-point errors if we turn too far
     while (rotation.z >= XM_2PI)

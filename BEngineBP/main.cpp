@@ -31,6 +31,8 @@
 #include "LuaManager.h"
 #include "ShaderManager.h"
 
+#include "SmokeEffect.h"
+
 #include "MouseManager.h"
 
 #include "ErrorReporter.h"
@@ -93,6 +95,7 @@ static void performExplosion(PxScene* scene, const PxVec3& explosionCenter, floa
 static void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
+    BEngine::smokeEffect.Initialize();
     BEngine::meshManager.StartLoading();
 
     //BEngine::Model* model = BEngine::meshManager.meshList["welt"];
@@ -164,10 +167,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     while (BEngine::win32Manager.m_isRunning)
     {
         BEngine::win32Manager.CheckMessages();
-        BEngine::timeManager.Tick();
-        BEngine::physXManager.Tick();
-        BEngine::mouseManager.UpdateMousePosition();
-        BEngine::mouseManager.HandleMouseState();
+        BEngine::timeManager.Frame();
+        BEngine::physXManager.Frame();
+        BEngine::mouseManager.Frame();
+        
 
         XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
@@ -205,7 +208,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                         performExplosion(BEngine::physXManager.m_scene, explosionCenter, explosionStrength, explosionRadius);
                     }
                 }
-                
             }
 
             if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) {
@@ -248,9 +250,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
 
+
+
+
         {
             perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
         }
+
+        XMFLOAT4X4 perspectiveMatLH;
+        XMStoreFloat4x4(&perspectiveMatLH, XMMatrixTranspose(perspectiveMat));
+
+        XMFLOAT4X4 viewMatLH;
+        XMStoreFloat4x4(&viewMatLH, XMMatrixTranspose(BEngine::playerCamera.viewMat));
 
         static float mouseSensitivity = 20.0F;
 
@@ -264,6 +275,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         if (!isLoading) {
             BEngine::shaderManager.Proc();
             entityManager.Draw(&playerMatrix, &perspectiveMat);
+
+            BEngine::smokeEffect.Draw(viewMatLH, perspectiveMatLH);
         }
 
         if (isLoading)
@@ -331,11 +344,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
                 XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
-                backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 2.0F, ImColor(255, 255, 255));
+                backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 255, 255));
 
             }
 
+           
+
             ImGui::End();
+
+            {
+                ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -150.0F, -180.0F, 60.0F }, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
+                backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 0, 0));
+            }
         }
 
         BEngine::errorReporter.Draw();

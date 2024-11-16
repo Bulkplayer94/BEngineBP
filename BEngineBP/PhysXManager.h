@@ -17,7 +17,7 @@ namespace BEngine {
         PxCapsuleController* m_playerController = nullptr;
 
         bool Initialize();
-        void Tick();
+        void Frame();
 
 	} physXManager;
 }

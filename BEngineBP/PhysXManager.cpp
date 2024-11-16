@@ -102,7 +102,7 @@ bool BEngine::PhysXManager::Initialize() {
     return true;
 }
 
-void BEngine::PhysXManager::Tick() {
+void BEngine::PhysXManager::Frame() {
     m_scene->simulate(BEngine::timeManager.m_deltaTime);
     m_scene->fetchResults(true);
 }

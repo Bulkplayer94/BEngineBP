@@ -17,7 +17,7 @@ bool BEngine::TimeManager::Initialize() {
 	return true;
 }
 
-void BEngine::TimeManager::Tick() {
+void BEngine::TimeManager::Frame() {
 	double previousTimeInSeconds = m_currTime;
 	LARGE_INTEGER perfCount;
 	QueryPerformanceCounter(&perfCount);

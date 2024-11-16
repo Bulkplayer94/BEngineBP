@@ -4,6 +4,12 @@
 #include "globals.h"
 #include "ImGui\imgui.h"
 
+void BEngine::MouseManager::Frame()
+{
+    UpdateMousePosition();
+    HandleMouseState();
+}
+
 void BEngine::MouseManager::UpdateMousePosition() {
     POINT mousePoint;
     if (GetCursorPos(&mousePoint)) {

@@ -14,7 +14,7 @@ namespace BEngine {
 
 		bool Initialize();
 
-		void Tick();
+		void Frame();
 
 	} timeManager;
 }

@@ -9,6 +9,7 @@ namespace BEngine {
         DirectX::XMFLOAT2 realMouseDrag = DirectX::XMFLOAT2();
         DirectX::XMFLOAT2 MousePos = DirectX::XMFLOAT2();
 
+        void Frame();
         void UpdateMousePosition();
         void HandleMouseState();
         void LockCursor();

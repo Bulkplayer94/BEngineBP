@@ -268,6 +268,8 @@ void ShaderManager::StartLoading()
 	}
 }
 
+static std::string currentShader = "";
+
 void ShaderManager::Proc() {
 	ID3D11DeviceContext* ctx = BEngine::direct3DManager.m_d3d11DeviceContext;
 
@@ -312,9 +314,9 @@ void ShaderManager::Proc() {
 		ctx->VSSetConstantBuffers(2, 1, &lightsBuffer);
 		ctx->PSSetConstantBuffers(2, 1, &lightsBuffer);
 	}
-}
 
-static std::string currentShader = "";
+	currentShader = "";
+}
 
 void Shader::SetContext(const XMMATRIX& perspectiveMat, const XMMATRIX& viewMat)
 {
