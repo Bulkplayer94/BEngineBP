@@ -107,7 +107,7 @@ static void LoadRessources() {
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
-    unsigned int cubeCount = 10;
+    unsigned int cubeCount = 25;
     float startPos = 0.F - (cubeCount / 2);
 
     float spacing = 7.5f; // Abstand zwischen den Würfeln
@@ -137,11 +137,6 @@ static void LoadRessources() {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
-    BEngine::win32Manager.Initialize(hInstance);
-    BEngine::direct3DManager.Initialize();
-    BEngine::physXManager.Initialize();
-    BEngine::timeManager.Initialize();
-
 #ifdef _DEBUG
     AllocConsole();
     freopen_s(&stream, "conout$", "w", stdout);
@@ -149,6 +144,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     freopen_s(&stream, "debug.log", "w", stdout);
 #endif
 
+    BEngine::win32Manager.Initialize(hInstance);
+    BEngine::direct3DManager.Initialize();
+    BEngine::physXManager.Initialize();
+    BEngine::timeManager.Initialize();
 
     using namespace Globals::CUserCmd;
     using namespace physx;
@@ -168,9 +167,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     {
         BEngine::win32Manager.CheckMessages();
         BEngine::timeManager.Frame();
-        BEngine::physXManager.Frame();
+
+        if (!isLoading)
+            BEngine::physXManager.Frame();
+
         BEngine::mouseManager.Frame();
-        
 
         XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
@@ -249,9 +250,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
-
-
-
 
         {
             perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
@@ -354,7 +352,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             {
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
-                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -150.0F, -180.0F, 60.0F }, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -100.0F, -100.0F, 40.0F }, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
                 backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 0, 0));
             }
         }

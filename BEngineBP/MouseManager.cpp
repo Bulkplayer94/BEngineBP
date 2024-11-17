@@ -4,6 +4,9 @@
 #include "globals.h"
 #include "ImGui\imgui.h"
 
+
+// Weird Bug when used to soon in the Main Loop:
+// The Camera will be very Buggy to Rotate.
 void BEngine::MouseManager::Frame()
 {
     UpdateMousePosition();

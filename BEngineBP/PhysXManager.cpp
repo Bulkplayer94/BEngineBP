@@ -13,16 +13,6 @@ FILE* stream2;
 using namespace physx;
 class PhysXErrorCallback : public PxErrorCallback {
 	void reportError(PxErrorCode::Enum code, const char* msg, const char* file, int line) {
-
-		if (!ConsoleEventOccured) {
-#ifdef _DEBUG
-			AllocConsole();
-            freopen_s(&stream2, "conout$", "w", stdout);
-#else
-            freopen_s(&stream2, "error.log", "w", stdout);
-#endif // _DEBUG
-		}
-
 		std::cout << \
 			"An PhysX Error Occured!\n" << \
 			"In File: " << file << "\n" << \

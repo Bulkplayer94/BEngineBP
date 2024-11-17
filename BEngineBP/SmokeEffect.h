@@ -2,6 +2,7 @@
 
 #include <d3d11_1.h>
 #include <DirectXMath.h>
+#include <string>
 
 namespace BEngine {
 	inline struct SmokeEffect {
@@ -24,7 +25,12 @@ namespace BEngine {
 		ID3D11Buffer* m_indexBuffer = nullptr;
 		ID3D11Buffer* m_matrixBuffer = nullptr;
 
+		ID3D11BlendState* m_blendState = nullptr;
+		ID3D11ShaderResourceView* m_gradientTexture = nullptr;
+		ID3D11SamplerState* m_samplerState = nullptr;
+
 		bool Initialize();
+		ID3D11ShaderResourceView* LoadTexture(std::string filePath);
 		void Draw(DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT4X4 projMatrix);
 		void Cleanup();
 	} smokeEffect;
