@@ -7,7 +7,7 @@
 namespace BEngine {
 	inline struct SmokeEffect {
 		struct Vertex {
-			DirectX::XMFLOAT3 position;
+			DirectX::XMFLOAT2 position;
 			DirectX::XMFLOAT2 tex;
 		};
 

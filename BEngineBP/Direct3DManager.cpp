@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Direct3DManager.h"
 #include "Win32Manager.h"
+#include "SettingsManager.h"
 
 bool BEngine::Direct3DManager::Initialize() {
 
@@ -74,6 +75,8 @@ bool BEngine::Direct3DManager::Initialize() {
 
 			OutputDebugStringA("Graphics Device: ");
 			OutputDebugStringW(adapterDesc.Description);
+			OutputDebugStringA("\n");
+			OutputDebugStringA(("VRAM: " + std::to_string(adapterDesc.DedicatedVideoMemory / 1000000000) + " GB\n").c_str());
 			OutputDebugStringA("\n");
 
 			hResult = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&dxgiFactory);

@@ -2,19 +2,21 @@
 #include "globals.h"
 #include "3DMaths.h"
 
-struct IMOverlayManager {
+namespace BEngine {
+	inline struct IMOverlayManager {
 
-	IMOverlayManager();
-	bool Proc();
-	bool EndProc();
-	~IMOverlayManager();
+		void Initialize();
+		bool Proc();
+		bool EndProc();
+		void Cleanup();
 
-private:
+	private:
 
-	bool IsConsoleVisible = true;
-	bool DrawConsole();
+		bool IsConsoleVisible = true;
+		bool DrawConsole();
 
-	bool IsDebugVisible = true;
-	bool DrawDebug();
+		bool IsDebugVisible = true;
+		bool DrawDebug();
 
-};
+	} imOverlayManager;
+}

@@ -27,7 +27,7 @@ bool SmokeEffect::Initialize()
     }
 
     constexpr D3D11_INPUT_ELEMENT_DESC layout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
@@ -37,10 +37,10 @@ bool SmokeEffect::Initialize()
     }
 
     Vertex vertices[] = {
-        {XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f)},
-        {XMFLOAT3(-1.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)},
-        {XMFLOAT3(1.0f, -1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f)},
-        {XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f)},
+        {XMFLOAT2(-1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f)},
+        {XMFLOAT2(-1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f)},
+        {XMFLOAT2(1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f)},
+        {XMFLOAT2(1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f)},
     };
 
     D3D11_SUBRESOURCE_DATA vertexData = {};
@@ -125,7 +125,7 @@ bool SmokeEffect::Initialize()
         return false;
     }
 
-    m_gradientTexture = LoadTexture("data\\textures\\light_bulb.png");
+    m_gradientTexture = LoadTexture("data\\textures\\smoke.png");
 }
 
 ID3D11ShaderResourceView* BEngine::SmokeEffect::LoadTexture(std::string filePath)

@@ -403,8 +403,11 @@ FodyWeavers.xsd
 # PhysX Save files
 *.pvd
 
-# User Specific Save file
+# User Specific Save files
 imgui.ini
+BEngineBP/data/settings/*.json
+BEngineBP/data/settings/*.cfg
+BEngineBP/data/settings/*.dat
 
 # Failure Logs
 *.log

@@ -13,8 +13,12 @@ namespace BEngine {
 		float m_width = 0.0F;
 		float m_height = 0.0F;
 		float m_aspectRatio = 0.0F;
+		float m_mouseDragX = 0.0F;
+		float m_mouseDragY = 0.0F;
 
 		bool Initialize(HINSTANCE hInstance);
 		void CheckMessages();
+		void LockMouse();
+		void UnlockMouse();
 	} win32Manager;
 }

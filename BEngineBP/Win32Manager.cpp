@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Win32Manager.h"
+#include "SettingsManager.h"
 
 #include "ImGui/imgui_impl_win32.h"
 #include "globals.h"
@@ -19,7 +20,40 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 	case WM_SIZE:
 	{
-		Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
+		if (BEngine::settingsManager.getSetting("Display Mode")->dropdownIndex == 0) {
+			Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
+		}
+		else {
+			return 1;
+		}
+		
+		break;
+	}
+	case WM_INPUT:
+	{
+		UINT dwSize;
+
+		GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+		LPBYTE lpb = new BYTE[dwSize];
+
+		if (lpb == nullptr)
+			break;
+
+		if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
+			delete[] lpb;
+			break;
+		}
+
+		RAWINPUT* raw = (RAWINPUT*)lpb;
+
+		if (raw->header.dwType == RIM_TYPEMOUSE) {
+			RAWMOUSE* rawMouse = &raw->data.mouse;
+
+			BEngine::win32Manager.m_mouseDragX -= rawMouse->lLastX;
+			BEngine::win32Manager.m_mouseDragY -= rawMouse->lLastY;
+		}
+
+		delete[] lpb;
 		break;
 	}
 	default:
@@ -29,6 +63,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
+
+	if (!BEngine::settingsManager.isSettingRegistered("Display Mode")) {
+		BEngine::SettingsManager::Setting fullscreen;
+		fullscreen.type = BEngine::SettingsManager::DROPDOWN;
+		fullscreen.name = "Display Mode";
+		fullscreen.category = "Display";
+		fullscreen.dropdownIndex = 0;
+		fullscreen.dropdownOptions.push_back("Window"); // 0 : Normal Window
+		fullscreen.dropdownOptions.push_back("Borderless Window"); // 1 : Window without Titlebar and on Desktop Size
+		fullscreen.dropdownOptions.push_back("Fullscreen"); // 2 : Real Direct3D11 Fullscreen
+
+		BEngine::settingsManager.registerSetting(fullscreen);
+	}
 
 	WNDCLASSEXW winClass = {};
 	winClass.cbSize = sizeof(WNDCLASSEXW);
@@ -45,8 +92,28 @@ bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
 		exit(GetLastError());
 	}
 
+	INT screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	INT screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+	BEngine::SettingsManager::Setting* fullscreenSetting = BEngine::settingsManager.getSetting("Display Mode");
+
+
 	RECT initialRect = { 0, 0, 1024, 768 };
-	AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+	if (fullscreenSetting->dropdownIndex == 0 || fullscreenSetting->dropdownIndex == 2) {
+		initialRect = { 0, 0, 1024, 768 };
+		AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+
+		m_width = 1024;
+		m_height = 768;
+	}
+	else if (fullscreenSetting->dropdownIndex == 1) {
+		initialRect = { 0, 0, screenWidth, screenHeight };
+		AdjustWindowRectEx(&initialRect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
+	
+		m_width = screenWidth;
+		m_height = screenHeight;
+	}
+	
 	LONG initialWidth = initialRect.right - initialRect.left;
 	LONG initialHeight = initialRect.bottom - initialRect.top;
 
@@ -59,29 +126,53 @@ bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
 		initialHeight,
 		0, 0, hInstance, 0);
 
-
 	if (!m_hWnd) {
 		MessageBoxA(0, "CreateWindowEx failed", "Fatal Error", MB_OK);
 		exit(GetLastError());
 	}
 
-	INT screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	INT screenHeight = GetSystemMetrics(SM_CYSCREEN);
+	if (fullscreenSetting->dropdownIndex == 1 || fullscreenSetting->dropdownIndex == 2) {
+		SetWindowLongPtr(m_hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+		SetWindowLongPtr(m_hWnd, GWL_EXSTYLE, WS_EX_APPWINDOW);
 
-	INT posX = (screenWidth - initialWidth) / 2;
-	INT posY = (screenHeight - initialHeight) / 2;
+		SetWindowPos(m_hWnd, HWND_TOP, 0, 0, screenWidth, screenHeight, SWP_FRAMECHANGED);
 
-	SetWindowPos(m_hWnd, NULL, posX, posY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+		SetForegroundWindow(m_hWnd);
+		ShowWindow(m_hWnd, SW_SHOWMAXIMIZED);
+
+		if (fullscreenSetting->dropdownIndex == 2) {
+			OutputDebugStringA("[BEngineBP] The D3D11 Fullscreen Mode is not Implemented, falling back to Fullscreen Window\n");
+		}
+	}
+	else {
+		INT posX = (screenWidth - initialWidth) / 2;
+		INT posY = (screenHeight - initialHeight) / 2;
+
+		SetWindowPos(m_hWnd, NULL, posX, posY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+		SetForegroundWindow(m_hWnd);
+	}
 
 	while (ShowCursor(FALSE) >= 0);
 
-	SetForegroundWindow(m_hWnd);
+	RAWINPUTDEVICE mouseDeviceDesc;
+	mouseDeviceDesc.usUsagePage = 0x01;
+	mouseDeviceDesc.usUsage = 0x02;
+	mouseDeviceDesc.dwFlags = RIDEV_INPUTSINK;
+	mouseDeviceDesc.hwndTarget = m_hWnd;
+
+	if (!RegisterRawInputDevices(&mouseDeviceDesc, 1, sizeof(RAWINPUTDEVICE)))
+		assert(false);
 
 	return true;
 }
 
 void BEngine::Win32Manager::CheckMessages()
 {
+	{
+		m_mouseDragX = 0.0F;
+		m_mouseDragY = 0.0F;
+	}
+
 	MSG msg = {};
 	while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
 	{
@@ -109,4 +200,33 @@ void BEngine::Win32Manager::CheckMessages()
 		}
 	}
 
+	if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+		if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
+			LockMouse();
+		}
+		else {
+			UnlockMouse();
+		}
+
+		Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] =
+			!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED];
+	}
+}
+
+void BEngine::Win32Manager::LockMouse() {
+	SetCursor(NULL);
+	while (ShowCursor(FALSE) >= 0);
+
+	RECT hwndInfo;
+	GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo);
+	int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
+	int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
+
+	SetCursorPos(HWNDwindowWidth + static_cast<int>(BEngine::win32Manager.m_width / 2),
+		HWNDwindowHeight + static_cast<int>(BEngine::win32Manager.m_height / 2));
+}
+
+void BEngine::Win32Manager::UnlockMouse() {
+	SetCursor(LoadCursorW(NULL, IDC_ARROW));
+	while (ShowCursor(TRUE) < 0);
 }

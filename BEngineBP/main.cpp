@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "IMOverlayManager.h"
+#include "SettingsManager.h"
 #include "EntityManager.h"
 
 #include "ImGui/imgui.h"
@@ -32,8 +33,7 @@
 #include "ShaderManager.h"
 
 #include "SmokeEffect.h"
-
-#include "MouseManager.h"
+//#include "ParticleManager.h"
 
 #include "ErrorReporter.h"
 #include "CCamera.h"
@@ -96,6 +96,8 @@ static void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
     BEngine::smokeEffect.Initialize();
+    //BEngine::particleManager.Initialize();
+    //BEngine::CreateExampleEmitter();
     BEngine::meshManager.StartLoading();
 
     //BEngine::Model* model = BEngine::meshManager.meshList["welt"];
@@ -107,7 +109,7 @@ static void LoadRessources() {
     //XMFLOAT3 weltRotation = welt->GetRotation();
     //welt->SetRotation({ weltRotation.y + XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
-    unsigned int cubeCount = 25;
+    unsigned int cubeCount = 10;
     float startPos = 0.F - (cubeCount / 2);
 
     float spacing = 7.5f; // Abstand zwischen den Würfeln
@@ -143,24 +145,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 #else
     freopen_s(&stream, "debug.log", "w", stdout);
 #endif
+    BEngine::settingsManager.loadSettings();
 
     BEngine::win32Manager.Initialize(hInstance);
     BEngine::direct3DManager.Initialize();
     BEngine::physXManager.Initialize();
     BEngine::timeManager.Initialize();
+    BEngine::imOverlayManager.Initialize();
+    BEngine::playerCamera.Initialize();
+
+    if (!BEngine::settingsManager.isSettingRegistered("FOV")) {
+        BEngine::SettingsManager::Setting fovSetting;
+        fovSetting.type = BEngine::SettingsManager::SLIDER_FLOAT;
+        fovSetting.name = "FOV";
+        fovSetting.category = "Camera";
+        fovSetting.sliderFloatValue = 86.0F;
+        fovSetting.sliderFloatMinValue = 0.1F;
+        fovSetting.sliderFloatMaxValue = 120.F;
+        
+        BEngine::settingsManager.registerSetting(fovSetting);
+    }
 
     using namespace Globals::CUserCmd;
     using namespace physx;
 
     std::thread thr(&LoadRessources);
     thr.detach();
-
-    IMOverlayManager imOverlayManager;
-
+    
     XMMATRIX perspectiveMat = {};
     Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
 
     BEngine::luaManager.Init();
+    Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = false;
 
     // Main Loop
     while (BEngine::win32Manager.m_isRunning)
@@ -168,10 +184,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         BEngine::win32Manager.CheckMessages();
         BEngine::timeManager.Frame();
 
-        if (!isLoading)
+        if (!isLoading && !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
             BEngine::physXManager.Frame();
+            //BEngine::particleManager.Update();
+        }
 
-        BEngine::mouseManager.Frame();
+        
 
         XMFLOAT3 eyeTracePos = { 0.0F, 0.0F, 0.0F };
         if (!isLoading) {
@@ -232,9 +250,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             }
         }
 
-        imOverlayManager.Proc();
+        BEngine::imOverlayManager.Proc();
 
-        static float fov = 84.0F;
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
         {
             BEngine::direct3DManager.m_d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
@@ -252,18 +269,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         } 
 
         {
-            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(fov), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
+            BEngine::SettingsManager::Setting* cameraFov = BEngine::settingsManager.getSetting("FOV");
+
+            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(cameraFov->sliderFloatValue), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
         }
 
         XMFLOAT4X4 perspectiveMatLH;
-        XMStoreFloat4x4(&perspectiveMatLH, XMMatrixTranspose(perspectiveMat));
+        DirectX::XMStoreFloat4x4(&perspectiveMatLH, XMMatrixTranspose(perspectiveMat));
+
+        XMFLOAT4X4 perspectiveMatRH;
+        DirectX::XMStoreFloat4x4(&perspectiveMatRH, perspectiveMat);
 
         XMFLOAT4X4 viewMatLH;
-        XMStoreFloat4x4(&viewMatLH, XMMatrixTranspose(BEngine::playerCamera.viewMat));
+        DirectX::XMStoreFloat4x4(&viewMatLH, XMMatrixTranspose(BEngine::playerCamera.viewMat));
 
-        static float mouseSensitivity = 20.0F;
+        XMFLOAT4X4 viewMatRH;
+        DirectX::XMStoreFloat4x4(&viewMatRH, BEngine::playerCamera.viewMat);
 
-        BEngine::playerCamera.HandleInput(mouseSensitivity, BEngine::mouseManager.GetRealMouseDrag());
+        BEngine::playerCamera.HandleInput({BEngine::win32Manager.m_mouseDragX, BEngine::win32Manager.m_mouseDragY});
         BEngine::playerCamera.Frame();
 
         BEngine::direct3DManager.ResetState();
@@ -275,6 +298,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             entityManager.Draw(&playerMatrix, &perspectiveMat);
 
             BEngine::smokeEffect.Draw(viewMatLH, perspectiveMatLH);
+            //BEngine::particleManager.Draw(viewMatRH, perspectiveMatRH);
         }
 
         if (isLoading)
@@ -322,10 +346,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
                 ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::playerCamera.rotation.x, BEngine::playerCamera.rotation.y, BEngine::playerCamera.rotation.z);
 
-                ImGui::SliderFloat("FOV", &fov, 0.01F, 120.0F);
-
-                ImGui::SliderFloat("Maus Empfindlichkeit", &mouseSensitivity, 0, 100);
-
                 ImGui::NewLine();
 
                 ImGui::Text("Actor Num Static: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
@@ -346,8 +366,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             }
 
-           
-
             ImGui::End();
 
             {
@@ -355,6 +373,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -100.0F, -100.0F, 40.0F }, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
                 backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 0, 0));
             }
+
+            BEngine::settingsManager.drawSettingsMenu();
         }
 
         BEngine::errorReporter.Draw();
@@ -366,6 +386,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         BEngine::direct3DManager.PresentFrame();
     }
 
+    BEngine::settingsManager.saveSettings();
+
+    BEngine::imOverlayManager.Cleanup();
+    //BEngine::particleManager.Cleanup();
+    BEngine::smokeEffect.Cleanup();
     BEngine::meshManager.ReleaseObjects();
     BEngine::direct3DManager.ClearObjects();
 

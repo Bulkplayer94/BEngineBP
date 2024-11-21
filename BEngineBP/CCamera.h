@@ -11,10 +11,12 @@ namespace BEngine {
         XMFLOAT3 forward;  // X, Y, Z
         XMMATRIX viewMat;
 
+        
         void Frame();
     };
 
     struct CPlayerCamera : CCamera {
-        void HandleInput(float sensitivity, XMFLOAT2 mouseDrag);
+        void Initialize();
+        void HandleInput(XMFLOAT2 mouseDrag);
     } inline playerCamera;
 }

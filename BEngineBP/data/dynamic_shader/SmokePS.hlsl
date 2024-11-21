@@ -10,5 +10,5 @@ Texture2D gradientTexture : register(t0);
 
 float4 main(PSInput input) : SV_Target
 {
-    return gradientTexture.Sample(gradientSampler, input.texCoords);
+    return gradientTexture.Sample(gradientSampler, input.texCoords) * input.color;
 }

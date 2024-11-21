@@ -7,7 +7,7 @@
 #include "ImGui\imgui_impl_win32.h"
 #include "ImGui\imgui_impl_dx11.h"
 
-IMOverlayManager::IMOverlayManager() {
+void BEngine::IMOverlayManager::Initialize() {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -18,17 +18,44 @@ IMOverlayManager::IMOverlayManager() {
 
 }
 
-bool IMOverlayManager::Proc() {
+bool BEngine::IMOverlayManager::Proc() {
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::SetNextWindowSize(ImVec2(200, 400));
+		ImGui::SetNextWindowPos(ImVec2((io.DisplaySize.x / 2) - 100, (io.DisplaySize.y / 2) - 200));
+
+		ImGui::Begin("Pause Menu", nullptr, ImGuiWindowFlags_NoResize | 
+			ImGuiWindowFlags_NoMove | 
+			ImGuiWindowFlags_NoCollapse | 
+			ImGuiWindowFlags_NoDecoration);
+
+		if (ImGui::Button("Continue")) {
+			Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = false;
+		}
+
+		ImDrawList* windowDrawList = ImGui::GetWindowDrawList();
+
+		if (ImGui::Button("Settings")) {
+
+		}
+
+		if (ImGui::Button("Exit")) {
+
+		}
+
+		ImGui::End();
+	}
+
 	return true;
 
 }
 
-bool IMOverlayManager::EndProc() {
+bool BEngine::IMOverlayManager::EndProc() {
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -37,13 +64,13 @@ bool IMOverlayManager::EndProc() {
 
 }
 
-IMOverlayManager::~IMOverlayManager() {
+void BEngine::IMOverlayManager::Cleanup() {
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 }
 
-bool IMOverlayManager::DrawConsole() {
+bool BEngine::IMOverlayManager::DrawConsole() {
 
 	if (this->IsConsoleVisible) {
 
@@ -53,7 +80,7 @@ bool IMOverlayManager::DrawConsole() {
 
 }
 
-bool IMOverlayManager::DrawDebug() {
+bool BEngine::IMOverlayManager::DrawDebug() {
 
 	if (this->IsDebugVisible) {
 

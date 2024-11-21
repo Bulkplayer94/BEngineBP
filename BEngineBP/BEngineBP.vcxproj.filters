@@ -87,13 +87,16 @@
     <ClCompile Include="Win32Manager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="MouseManager.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="TimeManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="SmokeEffect.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ResizableBuffer.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -182,10 +185,13 @@
     <ClInclude Include="TimeManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="MouseManager.h">
+    <ClInclude Include="SmokeEffect.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="SmokeEffect.h">
+    <ClInclude Include="ResizableBuffer.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
@@ -203,5 +209,8 @@
   <ItemGroup>
     <FxCompile Include="data\dynamic_shader\SmokeVS.hlsl" />
     <FxCompile Include="data\dynamic_shader\SmokePS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\ParticleVS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\AdditiveParticlePS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\AlphaParticlePS.hlsl" />
   </ItemGroup>
 </Project>

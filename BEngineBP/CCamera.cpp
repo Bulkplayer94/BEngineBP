@@ -2,6 +2,7 @@
 #include "TimeManager.h"
 #include "CCamera.h"
 #include "ImGui\imgui.h"
+#include "SettingsManager.h"
 
 void BEngine::CCamera::Frame() {
     // Create translation and rotation matrices
@@ -15,11 +16,23 @@ void BEngine::CCamera::Frame() {
     // Extract the forward vector from the view matrix
     XMVECTOR forwardVec = XMVectorSet(-viewMatT.r[2].m128_f32[0], -viewMatT.r[2].m128_f32[1], -viewMatT.r[2].m128_f32[2], 0.0f);
     XMStoreFloat3(&forward, forwardVec);
-
-
 }
 
-void BEngine::CPlayerCamera::HandleInput(float sensitivity, XMFLOAT2 mouseDrag) {
+void BEngine::CPlayerCamera::Initialize() {
+    if (!BEngine::settingsManager.isSettingRegistered("Mouse Sensitivity")) {
+        BEngine::SettingsManager::Setting setting;
+        setting.category = "Control";
+        setting.name = "Mouse Sensitivty";
+        setting.sliderIntValue = 20;
+        setting.sliderIntMinValue = 1;
+        setting.sliderIntMaxValue = 120;
+        setting.type = BEngine::SettingsManager::SLIDER_INT;
+
+        BEngine::settingsManager.registerSetting(setting);
+    }
+}
+
+void BEngine::CPlayerCamera::HandleInput(XMFLOAT2 mouseDrag) {
     if (Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED])
         return;
 
@@ -53,8 +66,10 @@ void BEngine::CPlayerCamera::HandleInput(float sensitivity, XMFLOAT2 mouseDrag) 
     if (ImGui::IsKeyDown(ImGuiKey_Q))
         camPos -= XMVectorSet(0, CAM_MOVE_AMOUNT, 0, 0);
 
-    rotation.z += (mouseDrag.x * (sensitivity / 10000)) * (BEngine::timeManager.m_deltaTime * 500);
-    rotation.y += (mouseDrag.y * (sensitivity / 10000)) * (BEngine::timeManager.m_deltaTime * 500);
+    BEngine::SettingsManager::Setting* mouseSensitivity = BEngine::settingsManager.getSetting("Mouse Sensitivty");
+
+    rotation.z += (mouseDrag.x * ((float)mouseSensitivity->sliderIntValue / 5000));
+    rotation.y += (mouseDrag.y * ((float)mouseSensitivity->sliderIntValue / 5000));
 
     // Wrap yaw to avoid floating-point errors if we turn too far
     while (rotation.z >= XM_2PI)
