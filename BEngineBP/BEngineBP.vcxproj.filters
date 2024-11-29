@@ -93,10 +93,10 @@
     <ClCompile Include="SmokeEffect.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="ResizableBuffer.cpp">
+    <ClCompile Include="SettingsManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="SettingsManager.cpp">
+    <ClCompile Include="ParticleManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -194,6 +194,9 @@
     <ClInclude Include="SettingsManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="ParticleManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lua\test_script.lua">
@@ -210,7 +213,7 @@
     <FxCompile Include="data\dynamic_shader\SmokeVS.hlsl" />
     <FxCompile Include="data\dynamic_shader\SmokePS.hlsl" />
     <FxCompile Include="data\dynamic_shader\ParticleVS.hlsl" />
-    <FxCompile Include="data\dynamic_shader\AdditiveParticlePS.hlsl" />
-    <FxCompile Include="data\dynamic_shader\AlphaParticlePS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\ParticlePS.hlsl" />
+    <FxCompile Include="data\dynamic_shader\ParticleCS.hlsl" />
   </ItemGroup>
 </Project>

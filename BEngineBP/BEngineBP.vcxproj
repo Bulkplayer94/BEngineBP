@@ -195,12 +195,12 @@
     <ClCompile Include="LuaManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshManager.cpp" />
+    <ClCompile Include="ParticleManager.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PhysXManager.cpp" />
     <ClCompile Include="Querys.cpp" />
-    <ClCompile Include="ResizableBuffer.cpp" />
     <ClCompile Include="SettingsManager.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="SmokeEffect.cpp" />
@@ -230,6 +230,7 @@
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="LuaManager.h" />
     <ClInclude Include="MeshManager.h" />
+    <ClInclude Include="ParticleManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PhysXManager.h" />
     <ClInclude Include="ResizableBuffer.h" />
@@ -246,11 +247,11 @@
     <None Include="lua\test_script.lua" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="data\dynamic_shader\AdditiveParticlePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    <FxCompile Include="data\dynamic_shader\ParticleCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
     </FxCompile>
-    <FxCompile Include="data\dynamic_shader\AlphaParticlePS.hlsl">
+    <FxCompile Include="data\dynamic_shader\ParticlePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>

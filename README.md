@@ -27,6 +27,13 @@ For this 3D engine to function, "meshes" must be provided and stored in the subf
 
 /BEngineBP/meshes
 
+# Controls
+* Turn your View by using Mouse
+* Move: W,A,S,D
+* Pause: ESC
+* Spawn Ball: 1
+* Spawn Cube: P
+
 
 The meshes used by BEngineBP by default can also be found at the link provided in the Downloads section.
 

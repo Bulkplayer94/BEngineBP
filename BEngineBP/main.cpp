@@ -33,7 +33,7 @@
 #include "ShaderManager.h"
 
 #include "SmokeEffect.h"
-//#include "ParticleManager.h"
+#include "ParticleManager.h"
 
 #include "ErrorReporter.h"
 #include "CCamera.h"
@@ -96,9 +96,8 @@ static void LoadRessources() {
 
     BEngine::shaderManager.StartLoading();
     BEngine::smokeEffect.Initialize();
-    //BEngine::particleManager.Initialize();
-    //BEngine::CreateExampleEmitter();
     BEngine::meshManager.StartLoading();
+    BEngine::particleManager.Initialize();
 
     //BEngine::Model* model = BEngine::meshManager.meshList["welt"];
     //std::cout << "Welt Bounding Box X,Y,Z:\n"
@@ -112,7 +111,7 @@ static void LoadRessources() {
     unsigned int cubeCount = 10;
     float startPos = 0.F - (cubeCount / 2);
 
-    float spacing = 7.5f; // Abstand zwischen den Würfeln
+    float spacing = 7.5f;
 
     for (unsigned int I1 = 0; I1 < cubeCount; ++I1) {
         for (unsigned int I2 = 0; I2 < cubeCount; ++I2) {
@@ -153,6 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     BEngine::timeManager.Initialize();
     BEngine::imOverlayManager.Initialize();
     BEngine::playerCamera.Initialize();
+    
 
     if (!BEngine::settingsManager.isSettingRegistered("FOV")) {
         BEngine::SettingsManager::Setting fovSetting;
@@ -298,7 +298,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             entityManager.Draw(&playerMatrix, &perspectiveMat);
 
             BEngine::smokeEffect.Draw(viewMatLH, perspectiveMatLH);
-            //BEngine::particleManager.Draw(viewMatRH, perspectiveMatRH);
+            BEngine::particleManager.Draw(viewMatLH, perspectiveMatLH);
         }
 
         if (isLoading)
@@ -388,6 +388,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
     BEngine::settingsManager.saveSettings();
 
+    BEngine::direct3DManager.m_d3d11DeviceContext->ClearState();
+
+    BEngine::particleManager.Cleanup();
     BEngine::imOverlayManager.Cleanup();
     //BEngine::particleManager.Cleanup();
     BEngine::smokeEffect.Cleanup();

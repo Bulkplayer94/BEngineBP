@@ -36,16 +36,17 @@ bool BEngine::IMOverlayManager::Proc() {
 
 		if (ImGui::Button("Continue")) {
 			Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = false;
+			ImGui::SetWindowFocus(NULL);
 		}
 
 		ImDrawList* windowDrawList = ImGui::GetWindowDrawList();
 
 		if (ImGui::Button("Settings")) {
-
+			
 		}
 
 		if (ImGui::Button("Exit")) {
-
+			BEngine::win32Manager.m_isRunning = false;
 		}
 
 		ImGui::End();

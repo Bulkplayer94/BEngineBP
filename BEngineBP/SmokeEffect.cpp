@@ -222,13 +222,17 @@ void BEngine::SmokeEffect::Draw(DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT
     ctx->PSSetSamplers(0, 1, &m_samplerState);
     ctx->PSSetShaderResources(0, 1, &m_gradientTexture);
 
-    float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    ID3D11BlendState* oldBlendState = nullptr;
+    FLOAT oldBlendFactor[4] = {};
+    UINT oldBlendMask = 0U;
+    ctx->OMGetBlendState(&oldBlendState, oldBlendFactor, &oldBlendMask);
 
+    FLOAT blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     ctx->OMSetBlendState(m_blendState, blendFactor, 0xffffffff);
 
     ctx->DrawIndexed(6, 0, 0);
 
-    ctx->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+    ctx->OMSetBlendState(oldBlendState, oldBlendFactor, oldBlendMask);
 }
 
 void BEngine::SmokeEffect::Cleanup()

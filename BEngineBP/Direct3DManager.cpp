@@ -226,6 +226,8 @@ void BEngine::Direct3DManager::TurnZBufferOn() {
 }
 
 void BEngine::Direct3DManager::ClearObjects() {
+	//m_d3d11Debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+
 	RELEASE_D3D11_OBJECT(m_d3d11DepthStencilStateNoZ);
 	RELEASE_D3D11_OBJECT(m_d3d11DepthStencilState);
 	RELEASE_D3D11_OBJECT(m_d3d11RasterizerState);

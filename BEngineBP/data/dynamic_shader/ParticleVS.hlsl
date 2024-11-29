@@ -1,38 +1,34 @@
-struct VSInput
+struct VertexInput
 {
-    float2 position : POSITION;
+    float2 pos : POSITION;
     float2 uv : TEX;
-    uint id : SV_InstanceID;
 };
 
-struct VSOutput
+struct VertexOutput
 {
-    float4 position : SV_Position;
-    float2 uvCoords : TEXCOORD0;
-    float4 color : COLOR0;
+    float4 pos : SV_Position;
+    float2 uv : TEXCOORD0;
 };
 
-struct Particle
+cbuffer MatrixBuffer : register(b3)
 {
-    float4x4 worldMatrix;
-    float4 color;
+    float4x4 viewMatrix;
+    float4x4 projMatrix;
 };
 
-StructuredBuffer<Particle> particleBuffer : register(t2);
-
-cbuffer MatrixBuffer : register(b5)
+struct ParticleInstance
 {
-    float4x4 viewProjectionMatrix;
+    float4x4 modelMatrix;
 };
 
-VSOutput main(VSInput input)
+StructuredBuffer<ParticleInstance> instanceBuffer : register(t1);
+
+VertexOutput main(VertexInput input, uint id : SV_InstanceID)
 {
-    VSOutput output;
-    
-    output.position = mul(float4(input.position, 0.0F, 1.0F), particleBuffer[input.id].worldMatrix);
-    output.position = mul(output.position, viewProjectionMatrix);
-    output.uvCoords = input.uv;
-    output.color = particleBuffer[input.id].color;
-    
+    VertexOutput output;
+    float4 worldPos = mul(float4(input.pos, 0.0F, 1.0F), instanceBuffer[id].modelMatrix);
+    float4 viewPos = mul(worldPos, viewMatrix);
+    output.pos = mul(viewPos, projMatrix);
+    output.uv = input.uv;
     return output;
 }
