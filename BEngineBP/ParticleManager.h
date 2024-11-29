@@ -22,6 +22,14 @@ namespace BEngine {
 			DirectX::XMFLOAT3 gravity;
 			float drag;
 			float lifeTime;
+			unsigned int textureID;
+			bool isDeleted;
+		};
+
+		struct AnimationBuffer {
+			float deltaTime;
+			float particleCount;
+			float padding[2];
 		};
 		
 		struct ParticleMatrices {
@@ -36,12 +44,21 @@ namespace BEngine {
 		ID3D11VertexShader* m_vertexShader = nullptr;
 		ID3D11InputLayout* m_inputLayout = nullptr;
 		ID3D11PixelShader* m_pixelShader = nullptr;
+		ID3D11ComputeShader* m_computeShader = nullptr;
 
 		ID3D11Buffer* m_vertexBuffer = nullptr;
 		ID3D11Buffer* m_indiceBuffer = nullptr;
 		ID3D11Buffer* m_particleMatrixBuffer = nullptr;
 
+		ID3D11Buffer* m_rwBuffer = nullptr;
+		ID3D11Buffer* m_rwBufferStaging = nullptr;
+		ID3D11Buffer* m_animationBuffer = nullptr;
+
+		ID3D11UnorderedAccessView* m_rwBufferUAV = nullptr;
+
 		void Initialize();
+
+		void RebuildBuffer();
 
 		void Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix);
 
