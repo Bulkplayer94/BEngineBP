@@ -12,7 +12,6 @@
 #include "Direct3DManager.h"
 #include "PhysXManager.h"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <cooking/PxCooking.h>

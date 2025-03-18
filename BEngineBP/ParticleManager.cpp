@@ -10,6 +10,8 @@
 #include "data/compiled_shader/ParticlePS.h"
 #include "data/compiled_shader/ParticleCS.h"
 
+#include "Timer.hpp"
+
 #define RELEASE_D3D11_OBJECT(obj) if (obj != nullptr) { obj->Release(); obj = nullptr; }
 
 
@@ -92,11 +94,13 @@ void BEngine::ParticleManager::Initialize() {
 		assert(SUCCEEDED(hRes));
 	}
 
+	int textureID = m_atlas.AppendTexture("data/textures/smoke.png");
+
 	{
 		unsigned int particleCount = 64;
 		float startPos = 100.F - (particleCount / 2);
 		
-		float spacing = 7.5f;
+		float spacing = 20.0f;
 		
 		for (unsigned int I1 = 0; I1 < particleCount; ++I1) {
 			for (unsigned int I2 = 0; I2 < particleCount; ++I2) {
@@ -110,20 +114,22 @@ void BEngine::ParticleManager::Initialize() {
 					computeParticle.velocity = XMFLOAT3(5.0F, 2.0F, 0.0F);
 					computeParticle.gravity = XMFLOAT3(0.0F, 1.0F, 0.0F);
 					computeParticle.drag = 1.0F;
-					computeParticle.lifeTime = 10.0F;
+					computeParticle.lifeTime = 5.0F;
 					computeParticle.isDeleted = false;
+					computeParticle.textureID = textureID;
 		
 					m_particleList.push_back(computeParticle);
 					m_particleInstances.dataBuffer.push_back({ XMFLOAT4X4() });
+					m_particleInstances2.dataBuffer.push_back({ XMFLOAT4X4() });
 				}
 			}
 		}
 
-		//m_particleList.push_back(computeParticle);
-		//m_particleInstances.dataBuffer.push_back({ XMFLOAT4X4() });
-
 		m_particleInstances.CreateBuffer();
 		m_particleInstances.RefreshBuffer();
+
+		m_particleInstances2.CreateBuffer();
+		m_particleInstances2.RefreshBuffer();
 	}
 
 	{
@@ -136,6 +142,15 @@ void BEngine::ParticleManager::Initialize() {
 		animationBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 		hRes = device->CreateBuffer(&animationBufferDesc, nullptr, &m_animationBuffer);
+		assert(SUCCEEDED(hRes));
+	}
+
+	{
+		D3D11_QUERY_DESC queryDesc = {};
+		queryDesc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
+		queryDesc.MiscFlags = 0;
+
+		hRes = device->CreatePredicate(&queryDesc, &m_occlusionPredicate);
 		assert(SUCCEEDED(hRes));
 	}
 
@@ -199,27 +214,31 @@ void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix
 		AnimationBuffer* animBuffer = (AnimationBuffer*)mappedSubresource.pData;
 		animBuffer->deltaTime = BEngine::timeManager.m_deltaTime;
 		animBuffer->particleCount = (float)m_particleList.size();
+
+		animBuffer->camPos = XMFLOAT4(
+			BEngine::playerCamera.position.x, 
+			BEngine::playerCamera.position.y, 
+			BEngine::playerCamera.position.z, 
+			1.0F);
+
 		ctx->Unmap(m_animationBuffer, 0);
 
 		ctx->CSSetShader(m_computeShader, nullptr, NULL);
 
 		UINT initialCount = m_particleList.size();
 		ctx->CSSetUnorderedAccessViews(0, 1, &m_rwBufferUAV, 0);
+		ctx->CSSetUnorderedAccessViews(1, 1, &m_particleInstances.d3d11ShaderUAV, &initialCount);
 		ctx->CSSetConstantBuffers(0, 1, &m_animationBuffer);
 
-		ctx->Dispatch(m_particleList.size() / 512, 1, 1);
+		ctx->Dispatch(m_particleList.size() / 1024, 1, 1);
 
-		ID3D11UnorderedAccessView* nullUAV = nullptr;
-		ctx->CSSetUnorderedAccessViews(0, 1, &nullUAV, 0);
+		ID3D11UnorderedAccessView* nullUAV[] = { nullptr, nullptr };
+		UINT initialUAV[] = { 0, 0 };
+		ctx->CSSetUnorderedAccessViews(0, 2, nullUAV, initialUAV);
 
-		ctx->CopyResource(m_rwBufferStaging, m_rwBuffer);
+		ctx->CSSetShader(nullptr, nullptr, NULL);
 
-		ZeroMemory(&mappedSubresource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-		ctx->Map(m_rwBufferStaging, 0, D3D11_MAP_READ, 0, &mappedSubresource);
-		{
-			std::memcpy(m_particleList.data(), mappedSubresource.pData, sizeof(Particle) * m_particleList.size());
-		}
-		ctx->Unmap(m_rwBufferStaging, 0);
+		ctx->CopyResource(m_particleInstances2.d3d11Buffer, m_particleInstances.d3d11Buffer);
 
 		bool wasChanged = false;
 		for (int I = m_particleList.size() - 1; I >= 0; --I) {
@@ -230,34 +249,6 @@ void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix
 				m_particleInstances.dataBuffer.erase(m_particleInstances.dataBuffer.begin() + I);
 				wasChanged = true;
 			}
-
-			XMVECTOR particlePos = XMLoadFloat3(&currParticle->position);
-
-			XMVECTOR camPos = XMLoadFloat3(&playerCamera.position);
-
-			XMVECTOR lookDir = XMVectorSubtract(particlePos, camPos);
-			lookDir = XMVector3Normalize(lookDir);
-
-			float pitch = asinf(XMVectorGetY(lookDir));
-			float yaw = atan2f(XMVectorGetX(lookDir), XMVectorGetZ(lookDir));
-
-			XMMATRIX rotationX = XMMatrixRotationX(-pitch);
-			XMMATRIX rotationY = XMMatrixRotationY(yaw);
-
-			XMMATRIX rotationMatrix = XMMatrixMultiply(rotationX, rotationY);
-
-			XMMATRIX translationMatrix = XMMatrixTranslationFromVector(particlePos);
-			XMMATRIX scalingMatrix = XMMatrixScaling(3.0F, 3.0F, 3.0F);
-
-			XMMATRIX worldMatrix = XMMatrixMultiply(scalingMatrix, rotationMatrix);
-			worldMatrix = XMMatrixMultiply(worldMatrix, translationMatrix);
-
-			worldMatrix = XMMatrixTranspose(worldMatrix);
-
-			XMFLOAT4X4 worldMatrix4X4;
-			XMStoreFloat4x4(&worldMatrix4X4, worldMatrix);
-
-			m_particleInstances.dataBuffer[I] = { worldMatrix4X4 };
 		}
 
 		if (wasChanged) {
@@ -271,9 +262,7 @@ void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix
 
 		if (m_particleInstances.dataBuffer.size() <= 0)
 			return;
-
-		m_particleInstances.RefreshBuffer();
-
+		
 		ctx->IASetInputLayout(m_inputLayout);
 		ctx->VSSetShader(m_vertexShader, nullptr, 0);
 		ctx->PSSetShader(m_pixelShader, nullptr, 0);
@@ -293,10 +282,14 @@ void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix
 		}
 		ctx->Unmap(m_particleMatrixBuffer, 0);
 
-		ctx->VSSetShaderResources(1, 1, &m_particleInstances.d3d11ShaderResources);
+		ctx->VSSetShaderResources(1, 1, &m_particleInstances2.d3d11ShaderResources);
 		ctx->VSSetConstantBuffers(3, 1, &m_particleMatrixBuffer);
 
+		ctx->PSSetShaderResources(0, 1, &m_atlas.m_textureSRV);
+
+		ctx->SetPredication(m_occlusionPredicate, TRUE);
 		ctx->DrawIndexedInstanced(6, (UINT)m_particleInstances.dataBuffer.size(), 0, 0, 0);
+		ctx->SetPredication(nullptr, FALSE);
 	}
 }
 

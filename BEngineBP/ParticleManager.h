@@ -2,6 +2,7 @@
 #include <DirectXMath.h>
 #include <vector>
 #include "ResizableBuffer.h"
+#include "TextureAtlas.h"
 
 using namespace DirectX;
 
@@ -27,9 +28,10 @@ namespace BEngine {
 		};
 
 		struct AnimationBuffer {
+			DirectX::XMFLOAT4 camPos;
 			float deltaTime;
 			float particleCount;
-			float padding[2];
+			DirectX::XMFLOAT2 padding;
 		};
 		
 		struct ParticleMatrices {
@@ -40,6 +42,10 @@ namespace BEngine {
 		std::vector<Particle> m_particleList;
 
 		BEngine::ResizeableBuffer<ParticleInstance> m_particleInstances;
+		BEngine::ResizeableBuffer<ParticleInstance> m_particleInstances2;
+
+
+		ID3D11Predicate* m_occlusionPredicate = nullptr;
 
 		ID3D11VertexShader* m_vertexShader = nullptr;
 		ID3D11InputLayout* m_inputLayout = nullptr;
@@ -55,6 +61,8 @@ namespace BEngine {
 		ID3D11Buffer* m_animationBuffer = nullptr;
 
 		ID3D11UnorderedAccessView* m_rwBufferUAV = nullptr;
+
+		TextureAtlas m_atlas;
 
 		void Initialize();
 

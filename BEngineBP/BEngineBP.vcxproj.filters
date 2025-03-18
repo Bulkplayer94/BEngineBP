@@ -99,6 +99,9 @@
     <ClCompile Include="ParticleManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DMaths.h">
@@ -195,6 +198,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ParticleManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureAtlas.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.hpp">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

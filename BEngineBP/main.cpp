@@ -97,7 +97,7 @@ static void LoadRessources() {
     BEngine::shaderManager.StartLoading();
     BEngine::smokeEffect.Initialize();
     BEngine::meshManager.StartLoading();
-    BEngine::particleManager.Initialize();
+    //BEngine::particleManager.Initialize();
 
     //BEngine::Model* model = BEngine::meshManager.meshList["welt"];
     //std::cout << "Welt Bounding Box X,Y,Z:\n"
@@ -298,7 +298,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             entityManager.Draw(&playerMatrix, &perspectiveMat);
 
             BEngine::smokeEffect.Draw(viewMatLH, perspectiveMatLH);
-            BEngine::particleManager.Draw(viewMatLH, perspectiveMatLH);
+            //BEngine::particleManager.Draw(viewMatLH, perspectiveMatLH);
         }
 
         if (isLoading)

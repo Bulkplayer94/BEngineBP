@@ -205,6 +205,7 @@
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="SmokeEffect.cpp" />
     <ClCompile Include="TimeManager.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Win32Manager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -238,7 +239,9 @@
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="Querys.h" />
     <ClInclude Include="SmokeEffect.h" />
+    <ClInclude Include="TextureAtlas.h" />
     <ClInclude Include="TimeManager.h" />
+    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Win32Manager.h" />
   </ItemGroup>
   <ItemGroup>
