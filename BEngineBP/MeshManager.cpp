@@ -27,10 +27,10 @@ void Mesh::RefillBuffers() {
 		return;
 
 	D3D11_MAPPED_SUBRESOURCE vertexSubresource;
-	BEngine::direct3DManager.m_d3d11DeviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertexSubresource);
+	BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertexSubresource);
 	//vertexSubresource.pData = this->vertexData.data();
 	memcpy(vertexSubresource.pData, this->vertexData.data(), this->vertexData.size() * sizeof(BEngine::VertexData));
-	BEngine::direct3DManager.m_d3d11DeviceContext->Unmap(vertexBuffer, 0);
+	BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->Unmap(vertexBuffer, 0);
 }
 
 ID3D11ShaderResourceView* LoadTexture(std::string filePath)
@@ -57,10 +57,10 @@ ID3D11ShaderResourceView* LoadTexture(std::string filePath)
 	textureSubresourceData.SysMemPitch = textureBytesPerRow;
 
 	ID3D11Texture2D* texture;
-	BEngine::direct3DManager.m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture);
+	BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture);
 
 	ID3D11ShaderResourceView* textureView;
-	BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView);
+	BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView);
 	texture->Release();
 
 	free(textureBytes);
@@ -111,13 +111,13 @@ void MeshManager::StartLoading()
 				loadedModel->isStatic = propertyJson["static"];
 		}
 
-		Shader* shader = &shaderManager.shaderList["default"];
+		Shader* shader = &ShaderManager::GetInstance().shaderList["default"];
 		if (jsonData.contains("shaderProperties") && jsonData["shaderProperties"].is_object())
 		{
 			JSON propertyJson = jsonData["shaderProperties"];
 
 			if (propertyJson.contains("shaderName") && propertyJson["shaderName"].is_string())
-				shader = &shaderManager.shaderList[std::string(propertyJson["shaderName"])];
+				shader = &ShaderManager::GetInstance().shaderList[std::string(propertyJson["shaderName"])];
 
 		}
 
@@ -215,7 +215,7 @@ void MeshManager::StartLoading()
 
 			D3D11_SUBRESOURCE_DATA vertexResource = { vertexVec.data() };
 
-			HRESULT hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newMesh.vertexBuffer);
+			HRESULT hResult = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexResource, &newMesh.vertexBuffer);
 			if (FAILED(hResult))
 				assert("Vertex Buffer Creation Failed");
 
@@ -226,7 +226,7 @@ void MeshManager::StartLoading()
 
 			D3D11_SUBRESOURCE_DATA indiceResource = { indiceVec.data() };
 
-			hResult = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newMesh.indiceBuffer);
+			hResult = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&indiceBufferDesc, &indiceResource, &newMesh.indiceBuffer);
 			if (FAILED(hResult))
 				assert("indices Buffer Creation Failed");
 
@@ -284,11 +284,11 @@ void MeshManager::StartLoading()
 			convexMeshDesc.points.stride = sizeof(float3);
 			convexMeshDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
 
-			PxCookingParams convexMeshParams(BEngine::physXManager.m_physics->getTolerancesScale());
+			PxCookingParams convexMeshParams(BEngine::PhysXManager::GetInstance().m_physics->getTolerancesScale());
 
-			PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, BEngine::physXManager.m_physics->getPhysicsInsertionCallback());
+			PxConvexMesh* convexMesh = PxCreateConvexMesh(convexMeshParams, convexMeshDesc, BEngine::PhysXManager::GetInstance().m_physics->getPhysicsInsertionCallback());
 
-			loadedModel->physicsModel = BEngine::physXManager.m_physics->createShape(PxConvexMeshGeometry(convexMesh), *BEngine::physXManager.m_material, false);
+			loadedModel->physicsModel = BEngine::PhysXManager::GetInstance().m_physics->createShape(PxConvexMeshGeometry(convexMesh), *BEngine::PhysXManager::GetInstance().m_material, false);
 
 			convexMesh->release();
 		}
@@ -306,21 +306,21 @@ void MeshManager::StartLoading()
 			if (!triangleMeshDesc.isValid())
 				assert(false);
 
-			PxCookingParams triangleMeshParams(BEngine::physXManager.m_physics->getTolerancesScale());
+			PxCookingParams triangleMeshParams(BEngine::PhysXManager::GetInstance().m_physics->getTolerancesScale());
 
 			PxTriangleMesh* triangleMesh = PxCreateTriangleMesh(triangleMeshParams, triangleMeshDesc);
 
-			loadedModel->physicsModel = BEngine::physXManager.m_physics->createShape(PxTriangleMeshGeometry(triangleMesh), *BEngine::physXManager.m_material, false);
+			loadedModel->physicsModel = BEngine::PhysXManager::GetInstance().m_physics->createShape(PxTriangleMeshGeometry(triangleMesh), *BEngine::PhysXManager::GetInstance().m_material, false);
 
 			triangleMesh->release();
 		}
 
 
-		if (jsonData.contains("defaultShader") && shaderManager.shaderList.contains(jsonData["defaultShader"])) {
-			loadedModel->defaultShader = &shaderManager.shaderList[jsonData["defaultShader"]];
+		if (jsonData.contains("defaultShader") && ShaderManager::GetInstance().shaderList.contains(jsonData["defaultShader"])) {
+			loadedModel->defaultShader = &ShaderManager::GetInstance().shaderList[jsonData["defaultShader"]];
 		}
 		else {
-			loadedModel->defaultShader = &shaderManager.shaderList["default"];
+			loadedModel->defaultShader = &ShaderManager::GetInstance().shaderList["default"];
 		}
 
 		modelNums++;

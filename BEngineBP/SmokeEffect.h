@@ -5,7 +5,12 @@
 #include <string>
 
 namespace BEngine {
-	inline struct SmokeEffect {
+	struct SmokeEffect {
+		static SmokeEffect& GetInstance() {
+			static SmokeEffect instance;
+			return instance;
+		}
+
 		struct Vertex {
 			DirectX::XMFLOAT2 position;
 			DirectX::XMFLOAT2 tex;
@@ -33,5 +38,5 @@ namespace BEngine {
 		ID3D11ShaderResourceView* LoadTexture(std::string filePath);
 		void Draw(DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT4X4 projMatrix);
 		void Cleanup();
-	} smokeEffect;
+	};
 }

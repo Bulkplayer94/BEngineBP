@@ -7,7 +7,11 @@
 #define RELEASE_D3D11_OBJECT(obj) if (obj != nullptr) { obj->Release(); obj = nullptr; }
 
 namespace BEngine {
-	inline struct Direct3DManager {
+	struct Direct3DManager {
+		static Direct3DManager& GetInstance() {
+			static Direct3DManager d3d11Manager;
+			return d3d11Manager;
+		}
 
 		ID3D11Device1* m_d3d11Device = nullptr;
 		ID3D11DeviceContext1* m_d3d11DeviceContext = nullptr;
@@ -32,5 +36,5 @@ namespace BEngine {
 		void TurnZBufferOn();
 		void ClearObjects();
 
-	} direct3DManager;
+	};
 }

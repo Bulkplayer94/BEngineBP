@@ -20,7 +20,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	}
 	case WM_SIZE:
 	{
-		if (BEngine::settingsManager.getSetting("Display Mode")->dropdownIndex == 0) {
+		if (BEngine::SettingsManager::GetInstance().getSetting("Display Mode")->dropdownIndex == 0) {
 			Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
 		}
 		else {
@@ -49,8 +49,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		if (raw->header.dwType == RIM_TYPEMOUSE) {
 			RAWMOUSE* rawMouse = &raw->data.mouse;
 
-			BEngine::win32Manager.m_mouseDragX -= rawMouse->lLastX;
-			BEngine::win32Manager.m_mouseDragY -= rawMouse->lLastY;
+			BEngine::Win32Manager::GetInstance().m_mouseDragX -= rawMouse->lLastX;
+			BEngine::Win32Manager::GetInstance().m_mouseDragY -= rawMouse->lLastY;
 		}
 
 		delete[] lpb;
@@ -64,7 +64,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
 
-	if (!BEngine::settingsManager.isSettingRegistered("Display Mode")) {
+	if (!BEngine::SettingsManager::GetInstance().isSettingRegistered("Display Mode")) {
 		BEngine::SettingsManager::Setting fullscreen;
 		fullscreen.type = BEngine::SettingsManager::DROPDOWN;
 		fullscreen.name = "Display Mode";
@@ -74,7 +74,7 @@ bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
 		fullscreen.dropdownOptions.push_back("Borderless Window"); // 1 : Window without Titlebar and on Desktop Size
 		fullscreen.dropdownOptions.push_back("Fullscreen"); // 2 : Real Direct3D11 Fullscreen
 
-		BEngine::settingsManager.registerSetting(fullscreen);
+		BEngine::SettingsManager::GetInstance().registerSetting(fullscreen);
 	}
 
 	WNDCLASSEXW winClass = {};
@@ -95,7 +95,7 @@ bool BEngine::Win32Manager::Initialize(HINSTANCE hInstance) {
 	INT screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	INT screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-	BEngine::SettingsManager::Setting* fullscreenSetting = BEngine::settingsManager.getSetting("Display Mode");
+	BEngine::SettingsManager::Setting* fullscreenSetting = BEngine::SettingsManager::GetInstance().getSetting("Display Mode");
 
 
 	RECT initialRect = { 0, 0, 1024, 768 };
@@ -190,9 +190,9 @@ void BEngine::Win32Manager::CheckMessages()
 		m_height = static_cast<float>(clientRect.bottom - clientRect.top);
 		m_aspectRatio = m_width / m_height;
 
-		if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] && GetActiveWindow() == BEngine::win32Manager.m_hWnd && GetFocus() == BEngine::win32Manager.m_hWnd) {
+		if (!Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] && GetActiveWindow() == BEngine::Win32Manager::GetInstance().m_hWnd && GetFocus() == BEngine::Win32Manager::GetInstance().m_hWnd) {
 			RECT hwndInfo;
-			GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo);
+			GetWindowRect(BEngine::Win32Manager::GetInstance().m_hWnd, &hwndInfo);
 			int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
 			int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
 
@@ -218,12 +218,12 @@ void BEngine::Win32Manager::LockMouse() {
 	while (ShowCursor(FALSE) >= 0);
 
 	RECT hwndInfo;
-	GetWindowRect(BEngine::win32Manager.m_hWnd, &hwndInfo);
+	GetWindowRect(BEngine::Win32Manager::GetInstance().m_hWnd, &hwndInfo);
 	int HWNDwindowWidth = static_cast<int>(hwndInfo.left);
 	int HWNDwindowHeight = static_cast<int>(hwndInfo.top);
 
-	SetCursorPos(HWNDwindowWidth + static_cast<int>(BEngine::win32Manager.m_width / 2),
-		HWNDwindowHeight + static_cast<int>(BEngine::win32Manager.m_height / 2));
+	SetCursorPos(HWNDwindowWidth + static_cast<int>(BEngine::Win32Manager::GetInstance().m_width / 2),
+		HWNDwindowHeight + static_cast<int>(BEngine::Win32Manager::GetInstance().m_height / 2));
 }
 
 void BEngine::Win32Manager::UnlockMouse() {

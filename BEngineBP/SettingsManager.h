@@ -8,7 +8,12 @@
 #include "json.hpp"
 
 namespace BEngine {
-    inline struct SettingsManager {
+    struct SettingsManager {
+        static SettingsManager& GetInstance() {
+            static SettingsManager instance;
+            return instance;
+        }
+
         enum SettingType { 
             SLIDER_INT, 
             SLIDER_FLOAT,
@@ -54,5 +59,5 @@ namespace BEngine {
         void loadSettings();
 
         bool isSettingRegistered(const std::string& name);
-    } settingsManager;
+    };
 }

@@ -3,7 +3,11 @@
 #include "3DMaths.h"
 
 namespace BEngine {
-	inline struct IMOverlayManager {
+	struct ImOverlayManager {
+		static ImOverlayManager& GetInstance() {
+			static ImOverlayManager instance;
+			return instance;
+		}
 
 		void Initialize();
 		bool Proc();
@@ -18,5 +22,5 @@ namespace BEngine {
 		bool IsDebugVisible = true;
 		bool DrawDebug();
 
-	} imOverlayManager;
+	};
 }

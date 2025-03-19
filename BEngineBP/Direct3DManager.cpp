@@ -97,7 +97,7 @@ bool BEngine::Direct3DManager::Initialize() {
 		d3d11SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 		d3d11SwapChainDesc.Flags = 0;
 
-		hResult = dxgiFactory->CreateSwapChainForHwnd(m_d3d11Device, BEngine::win32Manager.m_hWnd, &d3d11SwapChainDesc, 0, 0, &m_d3d11SwapChain);
+		hResult = dxgiFactory->CreateSwapChainForHwnd(m_d3d11Device, BEngine::Win32Manager::GetInstance().m_hWnd, &d3d11SwapChainDesc, 0, 0, &m_d3d11SwapChain);
 		assert(SUCCEEDED(hResult));
 
 		dxgiFactory->Release();
@@ -196,7 +196,7 @@ bool BEngine::Direct3DManager::ResetState() {
 
 	m_d3d11DeviceContext->ClearDepthStencilView(m_d3d11DepthBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)BEngine::win32Manager.m_width, (FLOAT)BEngine::win32Manager.m_height, 0.0f, 1.0f };
+	D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)BEngine::Win32Manager::GetInstance().m_width, (FLOAT)BEngine::Win32Manager::GetInstance().m_height, 0.0f, 1.0f};
 	m_d3d11DeviceContext->RSSetViewports(1, &viewport);
 
 	m_d3d11DeviceContext->RSSetState(m_d3d11RasterizerState);

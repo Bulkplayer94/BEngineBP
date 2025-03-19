@@ -22,6 +22,11 @@ namespace BEngine {
 	};
 
 	struct ShaderManager {
+		static ShaderManager& GetInstance() {
+			static ShaderManager instance;
+			return instance;
+		}
+
 		void CreateInstancedBuffer(int numElements);
 		void FillInstancedBuffer(unsigned int numElements, void* data);
 		void StartLoading();
@@ -35,5 +40,5 @@ namespace BEngine {
 		unsigned int instancedBufferCapacity = 0;
 
 		std::map<std::string, Shader> shaderList;
-	} extern shaderManager;
+	};
 }

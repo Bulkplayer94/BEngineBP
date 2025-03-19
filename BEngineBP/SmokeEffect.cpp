@@ -16,12 +16,12 @@ using namespace DirectX;
 bool SmokeEffect::Initialize()
 {
     HRESULT hRes;
-    hRes = direct3DManager.m_d3d11Device->CreateVertexShader(SmokeVS, ARRAYSIZE(SmokeVS), nullptr, &m_vertexShader);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateVertexShader(SmokeVS, ARRAYSIZE(SmokeVS), nullptr, &m_vertexShader);
     if (FAILED(hRes)) {
         return false;
     }
 
-    hRes = direct3DManager.m_d3d11Device->CreatePixelShader(SmokePS, ARRAYSIZE(SmokePS), nullptr, &m_pixelShader);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreatePixelShader(SmokePS, ARRAYSIZE(SmokePS), nullptr, &m_pixelShader);
     if (FAILED(hRes)) {
         return false;
     }
@@ -31,7 +31,7 @@ bool SmokeEffect::Initialize()
         { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
-    hRes = direct3DManager.m_d3d11Device->CreateInputLayout(layout, ARRAYSIZE(layout), SmokeVS, ARRAYSIZE(SmokeVS), &m_inputLayout);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateInputLayout(layout, ARRAYSIZE(layout), SmokeVS, ARRAYSIZE(SmokeVS), &m_inputLayout);
     if (FAILED(hRes)) {
         return false;
     }
@@ -52,7 +52,7 @@ bool SmokeEffect::Initialize()
     bufferDesc.Usage = D3D11_USAGE_DEFAULT;
     bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-    hRes = direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, &vertexData, &m_vertexBuffer);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&bufferDesc, &vertexData, &m_vertexBuffer);
     if (FAILED(hRes)) {
         return false;
     }
@@ -70,7 +70,7 @@ bool SmokeEffect::Initialize()
     bufferDesc.Usage = D3D11_USAGE_DEFAULT;
     bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     
-    hRes = direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, &indexData, &m_indexBuffer);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&bufferDesc, &indexData, &m_indexBuffer);
     if (FAILED(hRes)) {
         return false;
     }
@@ -81,7 +81,7 @@ bool SmokeEffect::Initialize()
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    hRes = direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &m_matrixBuffer);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &m_matrixBuffer);
     if (FAILED(hRes)) {
         return false;
     }
@@ -102,7 +102,7 @@ bool SmokeEffect::Initialize()
 
     blendDesc.RenderTarget[0] = rtBlendDesc;
 
-    hRes = direct3DManager.m_d3d11Device->CreateBlendState(&blendDesc, &m_blendState);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBlendState(&blendDesc, &m_blendState);
     if (FAILED(hRes)) {
         return false;
     }
@@ -120,7 +120,7 @@ bool SmokeEffect::Initialize()
     samplerDesc.MinLOD = 0;
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-    hRes = direct3DManager.m_d3d11Device->CreateSamplerState(&samplerDesc, &m_samplerState);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateSamplerState(&samplerDesc, &m_samplerState);
     if (FAILED(hRes)) {
         return false;
     }
@@ -153,12 +153,12 @@ ID3D11ShaderResourceView* BEngine::SmokeEffect::LoadTexture(std::string filePath
     textureSubresourceData.SysMemPitch = textureBytesPerRow;
 
     ID3D11Texture2D* texture;
-    if (FAILED(BEngine::direct3DManager.m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture))) {
+    if (FAILED(BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture))) {
         return nullptr;
     }
 
     ID3D11ShaderResourceView* textureView;
-    if (FAILED(BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView))) {
+    if (FAILED(BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateShaderResourceView(texture, nullptr, &textureView))) {
         return nullptr;        
     }
     texture->Release();
@@ -172,11 +172,11 @@ void BEngine::SmokeEffect::Draw(DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT
 {
     using namespace BEngine;
 
-    ID3D11DeviceContext1* ctx = direct3DManager.m_d3d11DeviceContext;
+    ID3D11DeviceContext1* ctx = BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext;
 
     XMVECTOR smokePos = XMVectorSet(-100.0F, -100.0F, 40.0F, 1.0F);
 
-    XMVECTOR camPos = XMLoadFloat3(&playerCamera.position);
+    XMVECTOR camPos = XMLoadFloat3(&BEngine::CPlayerCamera::GetInstance().position);
 
     XMVECTOR lookDir = smokePos - camPos;
     lookDir = XMVector3Normalize(lookDir);

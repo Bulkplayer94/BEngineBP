@@ -7,18 +7,18 @@
 #include "ImGui\imgui_impl_win32.h"
 #include "ImGui\imgui_impl_dx11.h"
 
-void BEngine::IMOverlayManager::Initialize() {
+void BEngine::ImOverlayManager::Initialize() {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	ImGui_ImplWin32_Init(BEngine::win32Manager.m_hWnd);
-	ImGui_ImplDX11_Init(BEngine::direct3DManager.m_d3d11Device, BEngine::direct3DManager.m_d3d11DeviceContext);
+	ImGui_ImplWin32_Init(BEngine::Win32Manager::GetInstance().m_hWnd);
+	ImGui_ImplDX11_Init(BEngine::Direct3DManager::GetInstance().m_d3d11Device, BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext);
 	ImGui::StyleColorsDark();
 
 }
 
-bool BEngine::IMOverlayManager::Proc() {
+bool BEngine::ImOverlayManager::Proc() {
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -46,7 +46,7 @@ bool BEngine::IMOverlayManager::Proc() {
 		}
 
 		if (ImGui::Button("Exit")) {
-			BEngine::win32Manager.m_isRunning = false;
+			BEngine::Win32Manager::GetInstance().m_isRunning = false;
 		}
 
 		ImGui::End();
@@ -56,7 +56,7 @@ bool BEngine::IMOverlayManager::Proc() {
 
 }
 
-bool BEngine::IMOverlayManager::EndProc() {
+bool BEngine::ImOverlayManager::EndProc() {
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -65,13 +65,13 @@ bool BEngine::IMOverlayManager::EndProc() {
 
 }
 
-void BEngine::IMOverlayManager::Cleanup() {
+void BEngine::ImOverlayManager::Cleanup() {
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 }
 
-bool BEngine::IMOverlayManager::DrawConsole() {
+bool BEngine::ImOverlayManager::DrawConsole() {
 
 	if (this->IsConsoleVisible) {
 
@@ -81,7 +81,7 @@ bool BEngine::IMOverlayManager::DrawConsole() {
 
 }
 
-bool BEngine::IMOverlayManager::DrawDebug() {
+bool BEngine::ImOverlayManager::DrawDebug() {
 
 	if (this->IsDebugVisible) {
 

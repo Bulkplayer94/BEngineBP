@@ -93,6 +93,6 @@ bool BEngine::PhysXManager::Initialize() {
 }
 
 void BEngine::PhysXManager::Frame() {
-    m_scene->simulate(BEngine::timeManager.m_deltaTime);
+    m_scene->simulate(BEngine::TimeManager::GetInstance().m_deltaTime);
     m_scene->fetchResults(true);
 }

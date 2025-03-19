@@ -19,7 +19,7 @@ void BEngine::CCamera::Frame() {
 }
 
 void BEngine::CPlayerCamera::Initialize() {
-    if (!BEngine::settingsManager.isSettingRegistered("Mouse Sensitivity")) {
+    if (!BEngine::SettingsManager::GetInstance().GetInstance().isSettingRegistered("Mouse Sensitivity")) {
         BEngine::SettingsManager::Setting setting;
         setting.category = "Control";
         setting.name = "Mouse Sensitivty";
@@ -28,7 +28,7 @@ void BEngine::CPlayerCamera::Initialize() {
         setting.sliderIntMaxValue = 120;
         setting.type = BEngine::SettingsManager::SLIDER_INT;
 
-        BEngine::settingsManager.registerSetting(setting);
+        BEngine::SettingsManager::GetInstance().registerSetting(setting);
     }
 }
 
@@ -52,7 +52,7 @@ void BEngine::CPlayerCamera::HandleInput(XMFLOAT2 mouseDrag) {
     if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
         CAM_MOVE_SPEED *= 4;
 
-    float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * BEngine::timeManager.m_deltaTime;
+    float CAM_MOVE_AMOUNT = CAM_MOVE_SPEED * BEngine::TimeManager::GetInstance().m_deltaTime;
     if (ImGui::IsKeyDown(ImGuiKey_W))
         camPos += XMVectorScale(fwdNormalized, CAM_MOVE_AMOUNT);
     if (ImGui::IsKeyDown(ImGuiKey_S))
@@ -66,7 +66,7 @@ void BEngine::CPlayerCamera::HandleInput(XMFLOAT2 mouseDrag) {
     if (ImGui::IsKeyDown(ImGuiKey_Q))
         camPos -= XMVectorSet(0, CAM_MOVE_AMOUNT, 0, 0);
 
-    BEngine::SettingsManager::Setting* mouseSensitivity = BEngine::settingsManager.getSetting("Mouse Sensitivty");
+    BEngine::SettingsManager::Setting* mouseSensitivity = BEngine::SettingsManager::GetInstance().getSetting("Mouse Sensitivty");
 
     rotation.z += (mouseDrag.x * ((float)mouseSensitivity->sliderIntValue / 5000));
     rotation.y += (mouseDrag.y * ((float)mouseSensitivity->sliderIntValue / 5000));

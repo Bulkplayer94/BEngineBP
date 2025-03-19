@@ -242,8 +242,6 @@ private:
 
 const char* LuaVector::LUA_VECTOR = "Vector";
 
-BEngine::LuaManager BEngine::luaManager = {};
-
 void luaL_openBLib(lua_State* L) {
 
 	luaL_openlibs(L);

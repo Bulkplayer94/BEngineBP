@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "ErrorReporter.h"
 
-BEngine::ErrorReporter BEngine::errorReporter = {};
-
 using namespace BEngine;
 
 void ErrorReporter::Report(ErrorLevel errLevel, std::string errMsg)

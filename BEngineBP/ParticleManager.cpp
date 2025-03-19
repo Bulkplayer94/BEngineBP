@@ -17,7 +17,7 @@
 
 void BEngine::ParticleManager::Initialize() {
 
-	ID3D11Device1* device = BEngine::direct3DManager.m_d3d11Device;
+	ID3D11Device1* device = BEngine::Direct3DManager::GetInstance().m_d3d11Device;
 	HRESULT hRes;
 
 	{
@@ -177,7 +177,7 @@ void BEngine::ParticleManager::RebuildBuffer() {
 		rwBufferData = { m_particleList.data() };
 			
 
-		HRESULT hRes = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&rwBufferDesc, &rwBufferData, &m_rwBuffer);
+		HRESULT hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&rwBufferDesc, &rwBufferData, &m_rwBuffer);
 		assert(SUCCEEDED(hRes));
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC rwBufferUAVDesc;
@@ -188,7 +188,7 @@ void BEngine::ParticleManager::RebuildBuffer() {
 		rwBufferUAVDesc.Format = DXGI_FORMAT_UNKNOWN;
 		rwBufferUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
-		hRes = BEngine::direct3DManager.m_d3d11Device->CreateUnorderedAccessView(m_rwBuffer, &rwBufferUAVDesc, &m_rwBufferUAV);
+		hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateUnorderedAccessView(m_rwBuffer, &rwBufferUAVDesc, &m_rwBufferUAV);
 		assert(SUCCEEDED(hRes));
 	
 		D3D11_BUFFER_DESC rwBufferStagingDesc;
@@ -198,13 +198,13 @@ void BEngine::ParticleManager::RebuildBuffer() {
 		rwBufferStagingDesc.Usage = D3D11_USAGE_STAGING;
 		rwBufferStagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 
-		hRes = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&rwBufferStagingDesc, nullptr, &m_rwBufferStaging);
+		hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&rwBufferStagingDesc, nullptr, &m_rwBufferStaging);
 		assert(SUCCEEDED(hRes));
 	}
 }
 
 void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix) {
-	ID3D11DeviceContext1* ctx = BEngine::direct3DManager.m_d3d11DeviceContext;
+	ID3D11DeviceContext1* ctx = BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext;
 
 	if (m_particleList.size() > 0) {
 		m_particleInstances.dataBuffer.reserve(m_particleList.size());
@@ -212,13 +212,13 @@ void BEngine::ParticleManager::Draw(XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projMatrix
 		D3D11_MAPPED_SUBRESOURCE mappedSubresource;
 		ctx->Map(m_animationBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
 		AnimationBuffer* animBuffer = (AnimationBuffer*)mappedSubresource.pData;
-		animBuffer->deltaTime = BEngine::timeManager.m_deltaTime;
+		animBuffer->deltaTime = BEngine::TimeManager::GetInstance().m_deltaTime;
 		animBuffer->particleCount = (float)m_particleList.size();
 
 		animBuffer->camPos = XMFLOAT4(
-			BEngine::playerCamera.position.x, 
-			BEngine::playerCamera.position.y, 
-			BEngine::playerCamera.position.z, 
+			BEngine::CPlayerCamera::GetInstance().position.x, 
+			BEngine::CPlayerCamera::GetInstance().position.y, 
+			BEngine::CPlayerCamera::GetInstance().position.z, 
 			1.0F);
 
 		ctx->Unmap(m_animationBuffer, 0);

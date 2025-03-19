@@ -94,8 +94,8 @@ static void performExplosion(PxScene* scene, const PxVec3& explosionCenter, floa
 
 static void LoadRessources() {
 
-    BEngine::shaderManager.StartLoading();
-    BEngine::smokeEffect.Initialize();
+    BEngine::ShaderManager::GetInstance().StartLoading();
+    BEngine::SmokeEffect::GetInstance().Initialize();
     BEngine::meshManager.StartLoading();
     //BEngine::particleManager.Initialize();
 
@@ -120,14 +120,14 @@ static void LoadRessources() {
                 float currPosY = startPos + I2 * spacing;
                 float currPosZ = startPos + I3 * spacing;
 
-                entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { currPosX, currPosY, currPosZ });
+                BEngine::EntityManager::GetInstance().RegisterEntity(BEngine::meshManager.meshList["cube"], {currPosX, currPosY, currPosZ});
             }
         }
     }
 
     //entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"], { 0.0F, 0.0F, 0.0F });
 
-    Entity* welt = entityManager.RegisterEntity(BEngine::meshManager.meshList["welt"], { -400.0F, -200.0F, -400.0F });
+    BEngine::Entity* welt = BEngine::EntityManager::GetInstance().RegisterEntity(BEngine::meshManager.meshList["welt"], {-400.0F, -200.0F, -400.0F});
     welt->SetRotation({ XMConvertToRadians(90.0F), 0.0F, 0.0F });
 
     isLoading = false;
@@ -144,17 +144,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 #else
     freopen_s(&stream, "debug.log", "w", stdout);
 #endif
-    BEngine::settingsManager.loadSettings();
+    BEngine::SettingsManager::GetInstance().loadSettings();
 
-    BEngine::win32Manager.Initialize(hInstance);
-    BEngine::direct3DManager.Initialize();
-    BEngine::physXManager.Initialize();
-    BEngine::timeManager.Initialize();
-    BEngine::imOverlayManager.Initialize();
-    BEngine::playerCamera.Initialize();
+    BEngine::Win32Manager::GetInstance().Initialize(hInstance);
+    BEngine::Direct3DManager::GetInstance().Initialize();
+    BEngine::PhysXManager::GetInstance().Initialize();
+    BEngine::TimeManager::GetInstance().Initialize();
+    BEngine::ImOverlayManager::GetInstance().Initialize();
+    BEngine::CPlayerCamera::GetInstance().Initialize();
     
 
-    if (!BEngine::settingsManager.isSettingRegistered("FOV")) {
+    if (!BEngine::SettingsManager::GetInstance().isSettingRegistered("FOV")) {
         BEngine::SettingsManager::Setting fovSetting;
         fovSetting.type = BEngine::SettingsManager::SLIDER_FLOAT;
         fovSetting.name = "FOV";
@@ -163,7 +163,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         fovSetting.sliderFloatMinValue = 0.1F;
         fovSetting.sliderFloatMaxValue = 120.F;
         
-        BEngine::settingsManager.registerSetting(fovSetting);
+        BEngine::SettingsManager::GetInstance().registerSetting(fovSetting);
     }
 
     using namespace Globals::CUserCmd;
@@ -175,17 +175,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     XMMATRIX perspectiveMat = {};
     Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = true;
 
-    BEngine::luaManager.Init();
+    BEngine::LuaManager::GetInstance().Init();
     Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED] = false;
 
     // Main Loop
-    while (BEngine::win32Manager.m_isRunning)
+    while (BEngine::Win32Manager::GetInstance().m_isRunning)
     {
-        BEngine::win32Manager.CheckMessages();
-        BEngine::timeManager.Frame();
+        BEngine::Win32Manager::GetInstance().CheckMessages();
+        BEngine::TimeManager::GetInstance().Frame();
 
         if (!isLoading && !Globals::Status::windowStatus[Globals::Status::WindowStatus_PAUSED]) {
-            BEngine::physXManager.Frame();
+            BEngine::PhysXManager::GetInstance().Frame();
             //BEngine::particleManager.Update();
         }
 
@@ -195,14 +195,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         if (!isLoading) {
             using namespace BEngine;
 
-            PxVec3 origin = { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z };
-            PxVec3 unitDir = { playerCamera.forward.x, playerCamera.forward.y, playerCamera.forward.z };
+            PxVec3 origin = { BEngine::CPlayerCamera::GetInstance().position.x, BEngine::CPlayerCamera::GetInstance().position.y,BEngine::CPlayerCamera::GetInstance().position.z };
+            PxVec3 unitDir = { BEngine::CPlayerCamera::GetInstance().forward.x, BEngine::CPlayerCamera::GetInstance().forward.y, BEngine::CPlayerCamera::GetInstance().forward.z };
             PxReal maxDistance = 500.0F;
             PxRaycastBuffer hit;
 
             unitDir.normalize();
 
-            bool status = BEngine::physXManager.m_scene->raycast(origin, unitDir, maxDistance, hit);
+            bool status = BEngine::PhysXManager::GetInstance().m_scene->raycast(origin, unitDir, maxDistance, hit);
             if (status) {
                 eyeTracePos = { hit.block.position.x, hit.block.position.y, hit.block.position.z };
 
@@ -224,19 +224,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                         float explosionStrength = 2500.0f;
                         float explosionRadius = 50.0f;
 
-                        performExplosion(BEngine::physXManager.m_scene, explosionCenter, explosionStrength, explosionRadius);
+                        performExplosion(BEngine::PhysXManager::GetInstance().m_scene, explosionCenter, explosionStrength, explosionRadius);
                     }
                 }
             }
 
             if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) {
                 if (ImGui::IsKeyPressed(ImGuiKey_P)) {
-                    Entity* entity = entityManager.RegisterEntity(BEngine::meshManager.meshList["cube"]);
+                    Entity* entity = BEngine::EntityManager::GetInstance().RegisterEntity(BEngine::meshManager.meshList["cube"]);
                     PxTransform trans = entity->physicsActor->getGlobalPose();
 
-                    trans.p.x = playerCamera.position.x;
-                    trans.p.y = playerCamera.position.y;
-                    trans.p.z = playerCamera.position.z;
+                    trans.p.x = BEngine::CPlayerCamera::GetInstance().position.x;
+                    trans.p.y = BEngine::CPlayerCamera::GetInstance().position.y;
+                    trans.p.z = BEngine::CPlayerCamera::GetInstance().position.z;
 
                     entity->physicsActor->setGlobalPose(trans);
 
@@ -245,33 +245,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 }
 
                 if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-                    Entity* spawned_ent = entityManager.RegisterEntity(BEngine::meshManager.meshList["ball"], { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z });
+                    Entity* spawned_ent = BEngine::EntityManager::GetInstance().RegisterEntity(BEngine::meshManager.meshList["ball"], {BEngine::CPlayerCamera::GetInstance().position.x, BEngine::CPlayerCamera::GetInstance().position.y, BEngine::CPlayerCamera::GetInstance().position.z});
                 }
             }
         }
 
-        BEngine::imOverlayManager.Proc();
+        BEngine::ImOverlayManager::GetInstance().Proc();
 
         if (Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] == true)
         {
-            BEngine::direct3DManager.m_d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
-            BEngine::direct3DManager.m_d3d11FrameBufferView->Release();
-            BEngine::direct3DManager.m_d3d11DepthBufferView->Release();
+            BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->OMSetRenderTargets(0, 0, 0);
+            BEngine::Direct3DManager::GetInstance().m_d3d11FrameBufferView->Release();
+            BEngine::Direct3DManager::GetInstance().m_d3d11DepthBufferView->Release();
 
-            HRESULT res = BEngine::direct3DManager.m_d3d11SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+            HRESULT res = BEngine::Direct3DManager::GetInstance().m_d3d11SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
             assert(SUCCEEDED(res));
 
             //win32CreateD3D11RenderTargets(d3d11Device, d3d11SwapChain, &d3d11FrameBufferView, &depthBufferView);
 
-            BEngine::direct3DManager.CreateD3D11RenderTargets();
+            BEngine::Direct3DManager::GetInstance().CreateD3D11RenderTargets();
 
             Globals::Status::windowStatus[Globals::Status::WindowStatus_RESIZE] = false;
         } 
 
         {
-            BEngine::SettingsManager::Setting* cameraFov = BEngine::settingsManager.getSetting("FOV");
+            BEngine::SettingsManager::Setting* cameraFov = BEngine::SettingsManager::GetInstance().getSetting("FOV");
 
-            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(cameraFov->sliderFloatValue), BEngine::win32Manager.m_aspectRatio , 0.1f, 1000.f);
+            perspectiveMat = XMMatrixPerspectiveFovRH(XMConvertToRadians(cameraFov->sliderFloatValue), BEngine::Win32Manager::GetInstance().m_aspectRatio , 0.1f, 1000.f);
         }
 
         XMFLOAT4X4 perspectiveMatLH;
@@ -281,23 +281,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         DirectX::XMStoreFloat4x4(&perspectiveMatRH, perspectiveMat);
 
         XMFLOAT4X4 viewMatLH;
-        DirectX::XMStoreFloat4x4(&viewMatLH, XMMatrixTranspose(BEngine::playerCamera.viewMat));
+        DirectX::XMStoreFloat4x4(&viewMatLH, XMMatrixTranspose(BEngine::CPlayerCamera::GetInstance().viewMat));
 
         XMFLOAT4X4 viewMatRH;
-        DirectX::XMStoreFloat4x4(&viewMatRH, BEngine::playerCamera.viewMat);
+        DirectX::XMStoreFloat4x4(&viewMatRH, BEngine::CPlayerCamera::GetInstance().viewMat);
 
-        BEngine::playerCamera.HandleInput({BEngine::win32Manager.m_mouseDragX, BEngine::win32Manager.m_mouseDragY});
-        BEngine::playerCamera.Frame();
+        BEngine::CPlayerCamera::GetInstance().HandleInput({BEngine::Win32Manager::GetInstance().m_mouseDragX, BEngine::Win32Manager::GetInstance().m_mouseDragY});
+        BEngine::CPlayerCamera::GetInstance().Frame();
 
-        BEngine::direct3DManager.ResetState();
+        BEngine::Direct3DManager::GetInstance().ResetState();
 
-        XMMATRIX playerMatrix = BEngine::playerCamera.viewMat;
+        XMMATRIX playerMatrix = BEngine::CPlayerCamera::GetInstance().viewMat;
         
         if (!isLoading) {
-            BEngine::shaderManager.Proc();
-            entityManager.Draw(&playerMatrix, &perspectiveMat);
+            BEngine::ShaderManager::GetInstance().Proc();
+            BEngine::EntityManager::GetInstance().Draw(&playerMatrix, &perspectiveMat);
 
-            BEngine::smokeEffect.Draw(viewMatLH, perspectiveMatLH);
+            BEngine::SmokeEffect::GetInstance().Draw(viewMatLH, perspectiveMatLH);
             //BEngine::particleManager.Draw(viewMatLH, perspectiveMatLH);
         }
 
@@ -316,18 +316,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
         else {
             if (ImGui::Begin("Camera"))
             {
-                std::string delta = "DeltaTime: " + std::to_string(BEngine::timeManager.m_deltaTime);
+                std::string delta = "DeltaTime: " + std::to_string(BEngine::TimeManager::GetInstance().m_deltaTime);
                 ImGui::Text(delta.c_str());
                 
                 static float smoothFPS = 60.0F;
-                smoothFPS -= (smoothFPS - (1.0F / BEngine::timeManager.m_deltaTime)) * BEngine::timeManager.m_deltaTime * 0.8F;
+                smoothFPS -= (smoothFPS - (1.0F / BEngine::TimeManager::GetInstance().m_deltaTime)) * BEngine::TimeManager::GetInstance().m_deltaTime * 0.8F;
 
                 static float counter = 0;
-                counter += BEngine::timeManager.m_deltaTime;
+                counter += BEngine::TimeManager::GetInstance().m_deltaTime;
 
                 static float maxFPS = FLT_MIN;
                 static float minFPS = FLT_MAX;
-                const float FPS = (1.0F / BEngine::timeManager.m_deltaTime);
+                const float FPS = (1.0F / BEngine::TimeManager::GetInstance().m_deltaTime);
 
                 if (counter > 0.5F) {
                     if (maxFPS < smoothFPS)
@@ -342,14 +342,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
                 ImGui::Text("Min FPS: %.4f", minFPS);
                 
                 ImGui::Text("FPS: %.2f", smoothFPS);
-                ImGui::Text("Pos: %.2f, %.2f, %.2f", BEngine::playerCamera.position.x, BEngine::playerCamera.position.y, BEngine::playerCamera.position.z);
-                ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::playerCamera.forward.x, BEngine::playerCamera.forward.y, BEngine::playerCamera.forward.z);
-                ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::playerCamera.rotation.x, BEngine::playerCamera.rotation.y, BEngine::playerCamera.rotation.z);
+                ImGui::Text("Pos: %.2f, %.2f, %.2f", BEngine::CPlayerCamera::GetInstance().position.x, BEngine::CPlayerCamera::GetInstance().position.y, BEngine::CPlayerCamera::GetInstance().position.z);
+                ImGui::Text("Fwd: %.2f, %.2f, %.2f", BEngine::CPlayerCamera::GetInstance().forward.x, BEngine::CPlayerCamera::GetInstance().forward.y, BEngine::CPlayerCamera::GetInstance().forward.z);
+                ImGui::Text("Rot: %.2f, %.2f, %.2f", BEngine::CPlayerCamera::GetInstance().rotation.x, BEngine::CPlayerCamera::GetInstance().rotation.y, BEngine::CPlayerCamera::GetInstance().rotation.z);
 
                 ImGui::NewLine();
 
-                ImGui::Text("Actor Num Static: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
-                ImGui::Text("Actor Num Dynamic: %d", (unsigned int)BEngine::physXManager.m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
+                ImGui::Text("Actor Num Static: %d", (unsigned int)BEngine::PhysXManager::GetInstance().m_scene->getNbActors(PxActorTypeFlag::eRIGID_STATIC));
+                ImGui::Text("Actor Num Dynamic: %d", (unsigned int)BEngine::PhysXManager::GetInstance().m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC));
                 
                 ImGui::Text("Eyetrace Position: %.2f, %.2f, %.2f", eyeTracePos.x, eyeTracePos.y, eyeTracePos.z );
             }
@@ -361,7 +361,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
             {
 
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
-                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen(eyeTrace.position, BEngine::CPlayerCamera::GetInstance().viewMat, perspectiveMat, BEngine::Win32Manager::GetInstance().m_width, BEngine::Win32Manager::GetInstance().m_height);
                 backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 255, 255));
 
             }
@@ -370,32 +370,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 
             {
                 ImDrawList* backgroundList = ImGui::GetBackgroundDrawList();
-                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -100.0F, -100.0F, 40.0F }, BEngine::playerCamera.viewMat, perspectiveMat, BEngine::win32Manager.m_width, BEngine::win32Manager.m_height);
+                XMFLOAT2 screenPos = BEngine::GuiLib::WorldToScreen({ -100.0F, -100.0F, 40.0F }, BEngine::CPlayerCamera::GetInstance().viewMat, perspectiveMat, BEngine::Win32Manager::GetInstance().m_width, BEngine::Win32Manager::GetInstance().m_height);
                 backgroundList->AddCircleFilled(ImVec2(screenPos.x, screenPos.y), 1.0F, ImColor(255, 0, 0));
             }
 
-            BEngine::settingsManager.drawSettingsMenu();
+            BEngine::SettingsManager::GetInstance().drawSettingsMenu();
         }
 
-        BEngine::errorReporter.Draw();
-        BEngine::ImMenus::DrawImMenus();
+        BEngine::ErrorReporter::GetInstance().Draw();
+        //BEngine::ImMenus::DrawImMenus();
 
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        BEngine::direct3DManager.PresentFrame();
+        BEngine::Direct3DManager::GetInstance().PresentFrame();
     }
 
-    BEngine::settingsManager.saveSettings();
+    BEngine::SettingsManager::GetInstance().saveSettings();
 
-    BEngine::direct3DManager.m_d3d11DeviceContext->ClearState();
+    BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->ClearState();
 
-    BEngine::particleManager.Cleanup();
-    BEngine::imOverlayManager.Cleanup();
+    BEngine::ImOverlayManager::GetInstance().Cleanup();
     //BEngine::particleManager.Cleanup();
-    BEngine::smokeEffect.Cleanup();
+    BEngine::SmokeEffect::GetInstance().Cleanup();
     BEngine::meshManager.ReleaseObjects();
-    BEngine::direct3DManager.ClearObjects();
+    BEngine::Direct3DManager::GetInstance().ClearObjects();
 
     return 0;
 }

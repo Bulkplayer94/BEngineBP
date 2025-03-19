@@ -5,7 +5,12 @@
 using namespace physx;
 
 namespace BEngine {
-	inline struct PhysXManager {
+	struct PhysXManager {
+
+        static PhysXManager& GetInstance() {
+            static PhysXManager instance;
+            return instance;
+        }
 
         PxFoundation* m_foundation = nullptr;
         PxPvd* m_pvd = nullptr;
@@ -19,5 +24,5 @@ namespace BEngine {
         bool Initialize();
         void Frame();
 
-	} physXManager;
+	};
 }

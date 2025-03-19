@@ -7,6 +7,10 @@
 
 namespace BEngine {
 	struct ErrorReporter {
+		static ErrorReporter& GetInstance() {
+			static ErrorReporter errorReporter;
+			return errorReporter;
+		}
 
 		enum ErrorLevel {
 			ErrorLevel_LOW, // GREEN
@@ -19,6 +23,5 @@ namespace BEngine {
 
 		void Report(ErrorLevel errLevel, std::string errMsg);
 		void Draw();
-
-	} extern errorReporter;
+	};
 }

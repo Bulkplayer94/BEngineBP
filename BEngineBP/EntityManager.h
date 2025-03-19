@@ -10,47 +10,54 @@
 #include <DirectXMath.h>
 using namespace DirectX;
 
-enum EntitySpawnFlags {
-	EntitySpawnFlags_NONE = 1 << 0,
-	EntitySpawnFlags_CENTER = 1 << 1,
-	EntitySpawnFlags_COUNT = 1 << 2,
-};
+namespace BEngine {
+	enum EntitySpawnFlags {
+		EntitySpawnFlags_NONE = 1 << 0,
+		EntitySpawnFlags_CENTER = 1 << 1,
+		EntitySpawnFlags_COUNT = 1 << 2,
+	};
 
-enum EntityType {
-	EntityType_NONE,
-	EntityType_LIGHT,
-	EntityType_OPAQUE,
-	EntityType_DEFAULT,
-	EntityType_NOLIGHT,
-};
+	enum EntityType {
+		EntityType_NONE,
+		EntityType_LIGHT,
+		EntityType_OPAQUE,
+		EntityType_DEFAULT,
+		EntityType_NOLIGHT,
+	};
 
-struct BaseEntity {
-	EntityType entType = EntityType_NONE;
-};
+	struct BaseEntity {
+		EntityType entType = EntityType_NONE;
+	};
 
-struct Entity {
-	BEngine::Model* modelMesh;
-	std::string modelName;
+	struct Entity {
+		BEngine::Model* modelMesh;
+		std::string modelName;
 
-	physx::PxRigidActor* physicsActor;
-	bool isStatic;
+		physx::PxRigidActor* physicsActor;
+		bool isStatic;
 
-	void SetPosition(XMFLOAT3 pos);
-	XMFLOAT3 GetPosition();
+		void SetPosition(XMFLOAT3 pos);
+		XMFLOAT3 GetPosition();
 	
-	void SetRotation(XMFLOAT3 rot);
-	XMFLOAT3 GetRotation();
-};
+		void SetRotation(XMFLOAT3 rot);
+		XMFLOAT3 GetRotation();
+	};
 
-struct EntityManager {
-	std::vector<Entity*> registeredEntitys;
-	unsigned int entitySize = 0;
-	ID3D11Buffer* instanceBuffer = nullptr;
+	struct EntityManager {
+		static EntityManager& GetInstance() {
+			static EntityManager entityManager;
+			return entityManager;
+		}
 
-	Entity* RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos = {0.0F, 0.0F, 0.0F}, EntitySpawnFlags entitySpawnFlags = EntitySpawnFlags_NONE);
+		std::vector<Entity*> registeredEntitys;
+		unsigned int entitySize = 0;
+		ID3D11Buffer* instanceBuffer = nullptr;
 
-	void Draw(XMMATRIX* viewMat, XMMATRIX* perspMat);
+		Entity* RegisterEntity(BEngine::Model* mMesh, XMFLOAT3 entityPos = {0.0F, 0.0F, 0.0F}, EntitySpawnFlags entitySpawnFlags = EntitySpawnFlags_NONE);
+
+		void Draw(XMMATRIX* viewMat, XMMATRIX* perspMat);
 	
-	void CheckInstanceBuffer(unsigned int instanceNumber);
-	void Sort();
-} extern entityManager;
+		void CheckInstanceBuffer(unsigned int instanceNumber);
+		void Sort();
+	};
+}

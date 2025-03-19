@@ -5,7 +5,11 @@
 #include <Windows.h>
 
 namespace BEngine {
-	inline struct TimeManager {
+	struct TimeManager {
+		static TimeManager& GetInstance() {
+			static TimeManager instance;
+			return instance;
+		}
 
 		LONGLONG m_startPerfCounter = 0.0L;
 		LONGLONG m_perfCounterFreq = 0.0L;
@@ -16,5 +20,5 @@ namespace BEngine {
 
 		void Frame();
 
-	} timeManager;
+	};
 }

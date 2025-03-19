@@ -16,7 +16,12 @@ namespace BEngine {
     };
 
     struct CPlayerCamera : CCamera {
+        static CPlayerCamera& GetInstance() {
+            static CPlayerCamera instance;
+            return instance;
+        }
+
         void Initialize();
         void HandleInput(XMFLOAT2 mouseDrag);
-    } inline playerCamera;
+    };
 }

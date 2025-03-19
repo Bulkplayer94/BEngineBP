@@ -44,7 +44,7 @@ struct TextureAtlas {
         textureSubresourceData.pSysMem = resizedTextureData.data();
         textureSubresourceData.SysMemPitch = 4 * 128;
 
-        HRESULT hRes = BEngine::direct3DManager.m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture2D);
+        HRESULT hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateTexture2D(&textureDesc, &textureSubresourceData, &texture2D);
         if (FAILED(hRes)) {
             throw std::runtime_error("Failed to create texture (HRESULT: " + std::to_string(hRes) + ")");
         }
@@ -66,7 +66,7 @@ struct TextureAtlas {
         texSRVDesc.Texture2DArray.MostDetailedMip = 0;
         texSRVDesc.Texture2DArray.MipLevels = 1;
 
-        HRESULT hRes = BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(m_textureList[0], &texSRVDesc, &m_textureSRV);
+        HRESULT hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateShaderResourceView(m_textureList[0], &texSRVDesc, &m_textureSRV);
         if (FAILED(hRes)) {
             throw std::runtime_error("Failed to create SRV (HRESULT: " + std::to_string(hRes) + ")");
         }

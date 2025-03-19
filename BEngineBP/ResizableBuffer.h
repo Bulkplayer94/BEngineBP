@@ -56,7 +56,7 @@ void BEngine::ResizeableBuffer<T>::CreateBuffer() {
     bufferDesc.StructureByteStride = sizeof(T);
     bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
-    HRESULT hRes = BEngine::direct3DManager.m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &d3d11Buffer);
+    HRESULT hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateBuffer(&bufferDesc, nullptr, &d3d11Buffer);
     if (FAILED(hRes))
         throw std::runtime_error("Creation of Structured Buffer Failed!");
 
@@ -65,7 +65,7 @@ void BEngine::ResizeableBuffer<T>::CreateBuffer() {
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srvDesc.Buffer.ElementWidth = static_cast<UINT>(dataBuffer.size() + 1);
 
-    hRes = BEngine::direct3DManager.m_d3d11Device->CreateShaderResourceView(d3d11Buffer, &srvDesc, &d3d11ShaderResources);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateShaderResourceView(d3d11Buffer, &srvDesc, &d3d11ShaderResources);
     if (FAILED(hRes))
         throw std::runtime_error("Creation of Structured Shader Resource View Failed!");
 
@@ -74,7 +74,7 @@ void BEngine::ResizeableBuffer<T>::CreateBuffer() {
     uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     uavDesc.Format = DXGI_FORMAT_UNKNOWN;
 
-    hRes = BEngine::direct3DManager.m_d3d11Device->CreateUnorderedAccessView(d3d11Buffer, &uavDesc, &d3d11ShaderUAV);
+    hRes = BEngine::Direct3DManager::GetInstance().m_d3d11Device->CreateUnorderedAccessView(d3d11Buffer, &uavDesc, &d3d11ShaderUAV);
     if (FAILED(hRes))
         throw std::runtime_error("Creation of Unordered Access View Failed!");
 }
@@ -84,20 +84,20 @@ bool BEngine::ResizeableBuffer<T>::RefreshBuffer() {
     if (dataBuffer.size() > lastBufferSize)
         CreateBuffer();
 
-    BEngine::direct3DManager.m_d3d11DeviceContext->UpdateSubresource(d3d11Buffer, 0, nullptr, dataBuffer.data(), 0, 0);
+    BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->UpdateSubresource(d3d11Buffer, 0, nullptr, dataBuffer.data(), 0, 0);
     return true;
 }
 
 template<typename T>
 bool BEngine::ResizeableBuffer<T>::UpdateVector() {
     D3D11_MAPPED_SUBRESOURCE mappedSubresource;
-    HRESULT hR = BEngine::direct3DManager.m_d3d11DeviceContext->Map(d3d11Buffer, 0, D3D11_MAP_READ, 0, &mappedSubresource);
+    HRESULT hR = BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->Map(d3d11Buffer, 0, D3D11_MAP_READ, 0, &mappedSubresource);
     assert(SUCCEEDED(hR));
 
     T* resourceData = reinterpret_cast<T*>(mappedSubresource.pData);
     dataBuffer.assign(resourceData, resourceData + dataBuffer.size());
 
-    BEngine::direct3DManager.m_d3d11DeviceContext->Unmap(d3d11Buffer, 0);
+    BEngine::Direct3DManager::GetInstance().m_d3d11DeviceContext->Unmap(d3d11Buffer, 0);
 
     return true;
 }
